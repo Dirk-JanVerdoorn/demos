@@ -192,6 +192,28 @@ details.howto summary{font-size:15px}
 th.sort{cursor:pointer} th.sort:hover{color:var(--navy)}
 .panel.fs{position:fixed;inset:0;z-index:40;border-radius:0;overflow:auto;margin:0}
 .panel.fs .mapc{height:calc(100vh - 150px)}
+/* AI summary */
+.ai-btn{display:flex;gap:8px;align-items:center;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;align-self:flex-end}
+.ai-btn:hover{background:var(--navy-2)}
+.ai-btn .spark{color:var(--sky);font-size:16px}
+.ai-body{padding:22px 28px 28px;display:flex;flex-direction:column;gap:18px}
+.ai-headline{font-family:var(--serif);font-size:20px;line-height:1.5;color:var(--ink)}
+.ai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ai-call{background:#fff;border:1px solid var(--line);border-left:6px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.ai-call.up{border-left-color:var(--up)} .ai-call.down{border-left-color:var(--down)}
+.ai-call b{font-size:14px} .ai-call .v{font-family:var(--serif);font-size:22px;color:var(--navy)} .ai-call p{font-size:13px;color:var(--ink-2);line-height:1.5}
+.ai-sec h3{font-family:var(--serif);font-size:18px;margin-bottom:8px}
+.ai-sec ul{margin-left:18px;font-size:14px;line-height:1.7;color:var(--ink-2)}
+.ai-recs{display:flex;flex-direction:column;gap:10px}
+.ai-rec{display:flex;gap:14px;background:var(--sky-soft);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.5}
+.ai-rec .n{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--navy);flex:none;width:24px}
+.ai-rec .own{font-size:12px;color:var(--navy);font-weight:600;margin-top:2px}
+.ai-load{display:flex;flex-direction:column;gap:10px;padding:10px 0}
+.ai-load i{display:block;height:14px;border-radius:7px;background:linear-gradient(90deg,var(--stone) 0%,var(--sky-soft) 50%,var(--stone) 100%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.ai-foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
+@media (max-width:860px){.ai-grid{grid-template-columns:1fr}}
+
 @media (max-width:1100px){.howgrid{grid-template-columns:1fr 1fr}.mapwrap{grid-template-columns:1fr}.clist{max-height:240px}.mkpis{grid-template-columns:1fr}}
 
 @media (max-width:1100px){.grid2{grid-template-columns:1fr}.loop{grid-template-columns:1fr 1fr}}
@@ -233,6 +255,7 @@ th.sort{cursor:pointer} th.sort:hover{color:var(--navy)}
     </div>
     <div id="view"></div>
     <dialog class="dd" id="dd" aria-label="Measure deep dive"></dialog>
+    <dialog class="dd" id="ai" aria-label="AI summary"></dialog>
   </main>
 </div>
 
@@ -244,7 +267,7 @@ const MARKETS={Global:1,'United States':.42,'United Kingdom':.09,Germany:.06,'Un
 const REGIONAL=['Japan','China','Australia','United Arab Emirates','Germany','United Kingdom'];
 const BRANDS={'All brands':1,'Hilton Hotels & Resorts':.38,'Waldorf Astoria':.05,'Conrad':.07,'DoubleTree':.2,'Hampton':.3};
 const QUARTERS=['Q4 2024','Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026'];
-const ADR=212;
+const ADR=212;const ROOMS=1.2e6*91;
 const S={market:'Global',brand:'All brands',q:7,view:'leadership',sel:{},layer:{}};
 const R=k=>rng(hash(S.market+'|'+S.brand+'|'+k));
 const scale=()=>MARKETS[S.market]*BRANDS[S.brand];
@@ -255,6 +278,8 @@ function series(key,n,start,drift,noise){
   out.push(Math.max(start*.05,trend*(1+amp*Math.sin(i*f+ph)+walk+shock)))}
  return out}
 const upto=a=>a.slice(0,S.q+1);
+/* executive KPIs always improve on the previous quarter in this mockup */
+const rise=a=>{const q=a.length-1;if(q>0&&a[q]<a[q-1]*1.03)a[q]=a[q-1]*(1.03+(Math.abs(Math.sin(a[q-1]*97))%1)*.06);return a};
 const fmt=n=>Math.round(n).toLocaleString('en-US');
 const pct=(n,d=0)=>n.toFixed(d)+'%';
 function monthsEnding(qi,n){const endM=(qi-0)*3+11;const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const out=[];for(let i=n-1;i>=0;i--){const m=endM-i;const y=2024+Math.floor(m/12);out.push(names[((m%12)+12)%12]+' '+String(y).slice(2))}return out}
@@ -283,18 +308,18 @@ const READY_TIP={now:'Measurable today with current data',connect:'Needs data so
 function kpiData(id){
  const s=scale(),r=R(id+S.q),q=S.q;
  const D={
-  irn:()=>{const a=upto(series('irn',8,52000,.07,.06)).map(v=>v*s*3.5);return{kind:'Commercial outcome',name:'Incremental room nights',value:fmt(a[q]),unit:'this quarter',delta:(a[q]/a[q-1]-1)*100,spark:a,ready:'scale',conf:3,
-    why:'Estimates additional room nights associated with discoverability activity, rather than attributing all channel bookings.',
-    blocks:'Room nights from AI- and organic-originated sessions; matched control pages; referral classification flag; stitched session ID',report:'By market and brand, by business unit, quarter on quarter',feeds:'Revenue impact: ≈ $'+fmt(a[q]*ADR/1e6*10/10)+'M at an average daily rate of $'+ADR+'.'}},
-  dcc:()=>{const a=upto(series('dcc',8,31,.025,.05));return{kind:'Supporting analysis',name:'Demand created vs captured',value:pct(a[q]),unit:'created',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:2,
+  irn:()=>{const a=rise(upto(series('irn',8,.48,.06,.06)));const tot=a.map(v=>v*ROOMS*s/1e6);return{kind:'Commercial outcome',name:'Incremental RevPAR',value:'$'+tot[q].toFixed(0)+'M',unit:'from improved discoverability, this quarter',revpar:a[q],total:tot[q],delta:(a[q]/a[q-1]-1)*100,spark:tot,ready:'scale',conf:3,
+    why:'The additional revenue driven by improved discoverability only, estimated with the full-funnel model and holdout tests, rather than attributing all channel bookings.',
+    blocks:'Room revenue from AI- and organic-originated sessions; available rooms; matched control pages; referral classification flag; stitched session ID',report:'By market and brand, by business unit, quarter on quarter',feeds:'Equivalent to +$'+a[q].toFixed(2)+' RevPAR across Hilton\'s available rooms this quarter.'}},
+  dcc:()=>{const a=rise(upto(series('dcc',8,31,.025,.05)));return{kind:'Supporting analysis',name:'Demand created vs captured',value:pct(a[q]),unit:'created',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:2,
     why:'Assesses whether discoverability activity is associated with new demand, or demand Hilton would likely have captured anyway.',
     blocks:'Search and prompt volume by territory; branded against non-branded demand; mix model channel inputs',report:'Created against captured, by market, by prompt territory',feeds:'Higher created share means discoverability is growing demand, not just harvesting it.'}},
-  hon:()=>{const a=upto(series('hon',8,14200,.05,.06)).map(v=>v*s);return{kind:'Loyalty outcome',name:'Honors joins before first stay',value:fmt(a[q]),unit:'this quarter',delta:(a[q]/a[q-1]-1)*100,spark:a,ready:'connect',conf:2,
+  hon:()=>{const a=rise(upto(series('hon',8,14200,.05,.06))).map(v=>v*s);return{kind:'Loyalty outcome',name:'Honors joins before first stay',value:fmt(a[q]),unit:'this quarter',delta:(a[q]/a[q-1]-1)*100,spark:a,ready:'connect',conf:2,
     why:'Tracks loyalty enrollment linked to discovery ahead of a guest\'s first stay, rather than at booking.',
     blocks:'Enrollment events with timestamp; first stay date; source classification; Honors ID',report:'By market and brand, discovery against booking',feeds:'Earlier enrollment builds a direct relationship before an OTA can claim the guest.'}},
-  soa:()=>{const a=upto(series('soa',8,22,.045,.04));return{kind:'Leading indicator',name:'Share of the answer',value:pct(a[q]),unit:'of priority AI answers',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:3,
+  soa:()=>{const a=rise(upto(series('soa',8,22,.045,.04)));return{kind:'Leading indicator',name:'Share of the answer',value:pct(a[q]),unit:'of priority AI answers',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:3,
     why:'Tracks Hilton\'s presence in responses to priority AI discovery questions. Moves ahead of commercial measures.',
-    blocks:'Prompt set by market and intent; responses captured per AI tool; Hilton and competitor mentions',report:'By AI tool, by market and language, brand-led against need-led',feeds:'Leads incremental room nights by roughly two months in this period.'}},
+    blocks:'Prompt set by market and intent; responses captured per AI tool; Hilton and competitor mentions',report:'By AI tool, by market and language, brand-led against need-led',feeds:'Leads incremental RevPAR by roughly two months in this period.'}},
   nlv:()=>{const a=upto(series('nlv',8,14,.06,.05));return{kind:'Team measure',name:'Need-led visibility',value:pct(a[q]),unit:'of need-led prompts',delta:a[q]-a[q-1],pts:true,spark:a,ready:'now',conf:3,
     why:'Hilton performs strongly on brand-led queries. Need-led queries are where the growth opportunity sits.',
     blocks:'Prompt set split brand-led and need-led; visibility per prompt; citation position; competitor visibility',report:'By prompt territory, by market and brand, direction period on period',feeds:'Feeds the leadership view through share of the answer.'}},
@@ -303,7 +328,7 @@ function kpiData(id){
     blocks:'Responses captured per AI tool; mention-level sentiment classification; attribute tagging; competitor mentions; factual accuracy checks',report:'By AI tool, by attribute, by market and language, against competitors',feeds:'Positive mentions turn visibility into recommendations, which lifts share of the answer.'}},
   ita:()=>{const a=upto(series('ita',8,46,-.05,.06));return{kind:'Team measure',name:'Insight to action',value:Math.round(a[q]),unit:'days, median',delta:a[q]-a[q-1],invert:true,spark:a,ready:'connect',conf:2,
     why:'Shows how long a recommendation takes to reach implementation, where the team currently loses most time.',
-    blocks:'Date finding raised; date owner assigned; date change released; priority level',report:'Days per stage, by team and priority, where work stalls',feeds:'Faster action brings visibility gains, and their room nights, forward.'}},
+    blocks:'Date finding raised; date owner assigned; date change released; priority level',report:'Days per stage, by team and priority, where work stalls',feeds:'Faster action brings visibility gains, and their revenue, forward.'}},
   ssa:()=>{const a=upto(series('ssa',8,18,.12,.05));return{kind:'Team measure',name:'Self-service adoption',value:pct(Math.min(a[q],92)),unit:'of provisioned users active',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:2,
     why:'Indicates how far a nine-person team can extend its reach without becoming a bottleneck.',
     blocks:'Users provisioned; active users in period; actions completed without GSD involvement',report:'By team, by region, by property group',feeds:'Each action taken without GSD frees the team for need-led growth work.'}},
@@ -356,7 +381,7 @@ function deltaHtml(k){const d=k.delta,good=k.invert?d<0:d>0;const unit=k.pts?' p
 function confHtml(n){return `<span class="conf" title="${['','Low','Medium','High'][n]} confidence">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span> ${['','Low','Medium','High'][n]}`}
 function tile(id,selected){const k=kpiData(id);
  return `<button class="tile" aria-pressed="${selected}" data-k="${id}">
-  <div class="row"><span class="kind">${k.kind}</span><span class="badge ${k.ready}" title="${READY_TIP[k.ready]}">${READY[k.ready]}</span></div>
+  <div class="row"><span class="kind">${k.kind}</span></div>
   <span class="name">${k.name}</span>
   <span class="val">${k.value} <small>${k.unit}</small></span>
   ${deltaHtml(k)}${spark(k.spark)}</button>`}
@@ -369,8 +394,8 @@ function mk(id,cfg){const c=new Chart(document.getElementById(id),cfg);charts.pu
 function detailChart(id,cid){
  const r=R('d'+id+S.q),s=scale(),months=monthsEnding(S.q,12);
  const C={
-  irn:()=>{const q=upto(QUARTERS),a=upto(series('irn',8,52000,.07,.06)).map(v=>v*s*3.5);
-   mk(cid,{type:'bar',data:{labels:q,datasets:[{label:'Incremental room nights',data:a,backgroundColor:a.map((_,i)=>i===S.q?'#022F5F':'#A9DBFF'),borderRadius:6}]},options:baseOpts({plugins:{legend:{display:false}}})})},
+  irn:()=>{const q=upto(QUARTERS),a=rise(upto(series('irn',8,.48,.06,.06))).map(v=>v*ROOMS*s/1e6);
+   mk(cid,{type:'bar',data:{labels:q,datasets:[{label:'Incremental RevPAR',data:a,backgroundColor:a.map((_,i)=>i===S.q?'#022F5F':'#A9DBFF'),borderRadius:6}]},options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(0)+'M from improved discoverability'}}},scales:{y:{ticks:{callback:v=>'$'+v.toFixed(0)+'M'}}}})})},
   dcc:()=>{const mk_=REGIONAL.concat(['United States']);const cr=mk_.map(m=>20+rng(hash(m+S.q))()*25);
    mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'Created',data:cr,backgroundColor:'#022F5F',borderRadius:4},{label:'Captured',data:cr.map(v=>100-v),backgroundColor:'#A9DBFF',borderRadius:4}]},options:baseOpts({indexAxis:'y',scales:{x:{stacked:true,max:100,ticks:{callback:v=>v+'%'}},y:{stacked:true,grid:{display:false}}}})})},
   hon:()=>{const before=series('honb',12,820,.03,.08).map(v=>v*s*5),at=series('hona',12,1900,.005,.06).map(v=>v*s*5);
@@ -410,7 +435,7 @@ function detailChart(id,cid){
  };
  return C[id]();
 }
-const DETAIL_TITLE={irn:'Incremental room nights by quarter',dcc:'Demand created vs captured, by market',hon:'Honors joins, before first stay vs at booking',soa:'Share of the answer by AI tool',
+const DETAIL_TITLE={irn:'Incremental RevPAR from improved discoverability, by quarter',dcc:'Demand created vs captured, by market',hon:'Honors joins, before first stay vs at booking',soa:'Share of the answer by AI tool',
  nlv:'Visibility on brand-led vs need-led prompts',sen:'Share of Hilton mentions that are positive, neutral or negative',ita:'Where work stalls: days per stage, by team',ssa:'Self-service adoption by group',ait:'AI sessions: confirmed, inferred, and still recorded as direct',
  irr:'Authenticated vs anonymous sessions, by surface',mco:'Calibration by channel',itp:'Days per stage, by content type',ppr:'Property page readiness by brand',mmr:'Demand themes vs offer availability',
  mcs:'Who gets cited in APAC answers',lat:'Hilton visibility in local AI tools',ecs:'Who gets named in EMEA answers, by market',ilp:'Priority content available in each language',lpc:'Visibility: in-market vs translated prompts'};
@@ -521,7 +546,7 @@ function dimsFor(r){const n=r.name.toLowerCase(),L=r.layer;
  if(L==='Technical')return ['Brand','Page template'];
  if(L==='Data')return /ai|session|source/.test(n)?['Traffic source','Market']:['Device','Market'];
  return ['Team','Market']}
-const FEEDS={Visibility:'Feeds share of the answer in the leadership view.',Response:'Feeds incremental room nights through the customer response layer.',Outcome:'Reported directly in the leadership view.',Intervention:'Moves visibility, which the model values in bookings.',Technical:'Moves visibility, which the model values in bookings.',Data:'Sets the confidence stated against leadership figures.',Operations:'Speeds up how quickly gains reach the leadership view.',Content:'Precondition for in-market visibility.'};
+const FEEDS={Visibility:'Feeds share of the answer in the leadership view.',Response:'Feeds incremental RevPAR through the customer response layer.',Outcome:'Reported directly in the leadership view.',Intervention:'Moves visibility, which the model values in bookings.',Technical:'Moves visibility, which the model values in bookings.',Data:'Sets the confidence stated against leadership figures.',Operations:'Speeds up how quickly gains reach the leadership view.',Content:'Precondition for in-market visibility.'};
 function breakVals(r,dim){const vals=DIMS[dim];const many=r.u==='count'||r.u==='usd'||r.u==='n';
  const w=vals.map(x=>.4+rng(hash(r.name+dim+x+S.market))()*1.2);const ws=w.reduce((a,b)=>a+b);
  return vals.map((x,i)=>{const g=rng(hash(r.name+dim+x+S.q+S.market+S.brand));
@@ -729,29 +754,77 @@ function showPage(M,p){const c=M.clusters[p.c];
  <div><span class="layer">Cited by</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${p.plats.map(x=>`<span class="ctag" style="background:var(--sky-soft);color:var(--navy)">${x}</span>`).join('')}</div></div>
  <div class="feeds">${p.mentioned?(p.type==='Hilton owned'?'Hilton-owned page that AI tools already cite. Keep it fresh and well structured.':'This page already mentions Hilton. Check the mention is accurate and positive.'):(p.type==='Competitor'?'Competitor page that AI tools cite for this topic. A comparable Hilton page is the response.':'High-value gap: a cited page without Hilton. Target for outreach, partnership content, or a stronger Hilton page on the topic.')}</div>`}
 
+
+/* ---------- AI summary: last 7 days vs previous 7 ---------- */
+const KEYM=[['Share of the answer','%',24,1,'Global Search & Discoverability'],['AI citations of Hilton pages','count',5800,1,'Content Marketing & Editorial'],['AI referral sessions','count',58000,1,'Strategy, Insights & Analytics'],['Need-led visibility','%',15,1,'Global Search & Discoverability'],['Organic sessions','count',600000,1,'Global Search & Discoverability'],['Direct bookings from AI and organic','count',2600,1,'Leadership'],['Honors joins before first stay','count',520,1,'Loyalty'],['Net sentiment in AI answers','pts',31,1,'Communications & PR'],['Accuracy issues flagged','n',22,0,'Communications & PR'],['AI crawler error rate','%',7,0,'Digital Product & Engineering'],['Release to index','days',6,0,'Digital Product & Engineering']];
+function week2(key,base,vol){const r=rng(hash('w'+key+S.market+S.brand+S.q+S.view));const shift=(r()-.45)*.26;return Array.from({length:14},(_,i)=>base*(1+(i>=7?shift:0)+(r()-.5)*vol))}
+function summaryData(){const s=scale();const avgU=u=>['%','pts','days'].includes(u);
+ const metrics=KEYM.map(([name,u,base,hb,owner])=>{const b=u==='count'?base*s:base;const d=week2(name,b,.12);const p=d.slice(0,7),c=d.slice(7);
+  const agg=a=>avgU(u)?a.reduce((x,y)=>x+y)/7:a.reduce((x,y)=>x+y);const prev=agg(p),cur=agg(c);
+  const chg=avgU(u)?cur-prev:(cur/prev-1)*100;return {name,unit:u,prev,cur,chg,chgUnit:avgU(u)?(u==='days'?' days':' pts'):'%',good:hb?chg>0:chg<0,owner,mag:Math.abs(avgU(u)?chg/Math.max(prev,1)*100:chg)}});
+ const tool=(S.view==='apac'?['ChatGPT','Gemini','Perplexity','Doubao','DeepSeek','Naver']:AI_TOOLS).map(x=>{const d=week2('t'+x,12+rng(hash(x))()*22,.1);const p=d.slice(0,7).reduce((a,b)=>a+b)/7,c=d.slice(7).reduce((a,b)=>a+b)/7;return {tool:x,prev:p,cur:c,chg:c-p}});
+ const mk=(S.view==='apac'?['Japan','China','Korea','Australia','Singapore','India']:S.view==='emea'?['United Kingdom','Germany','France','Spain','UAE','Saudi Arabia']:['United States','United Kingdom','Germany','UAE','Japan','China','Australia']).map(x=>{const d=week2('m'+x,15+rng(hash(x+'m'))()*20,.1);const p=d.slice(0,7).reduce((a,b)=>a+b)/7,c=d.slice(7).reduce((a,b)=>a+b)/7;return {market:x,prev:p,cur:c,chg:c-p}});
+ return {context:{view:VIEWS[S.view].title,market:S.market,brand:S.brand,quarter:QUARTERS[S.q]},metrics,tool,mk}}
+const fv=(v,u)=>u==='%'?v.toFixed(1)+'%':u==='pts'?(v>0?'+':'')+v.toFixed(1):u==='days'?v.toFixed(1)+' days':fmtUnit(v,u==='n'?'n':'count');
+const fc=m=>(m.chg>0?'+':'')+m.chg.toFixed(1)+m.chgUnit;
+function localSummary(D){const ms=[...D.metrics].sort((a,b)=>b.mag-a.mag);const soa=D.metrics[0],ref=D.metrics[2];
+ const tUp=[...D.tool].sort((a,b)=>b.chg-a.chg)[0],tDn=[...D.tool].sort((a,b)=>a.chg-b.chg)[0],mUp=[...D.mk].sort((a,b)=>b.chg-a.chg)[0],mDn=[...D.mk].sort((a,b)=>a.chg-b.chg)[0];
+ const bad=ms.filter(m=>!m.good).slice(0,3),good=ms.filter(m=>m.good).slice(0,2);
+ const where=D.context.market==='Global'?'globally':'in '+D.context.market;
+ const headline=`Compared with the previous seven days, share of the answer ${soa.chg>=0?'rose':'fell'} ${Math.abs(soa.chg).toFixed(1)} pts ${where} and AI referral sessions ${ref.chg>=0?'grew':'dropped'} ${Math.abs(ref.chg).toFixed(1)}%. The biggest single move was ${ms[0].name.toLowerCase()} (${fc(ms[0])}).`;
+ const callouts=ms.slice(0,3).map(m=>({title:m.name,value:fc(m),direction:m.good?'up':'down',detail:`${fv(m.prev,m.unit)} → ${fv(m.cur,m.unit)} week on week. ${m.good?'Moving in the right direction.':'Moving the wrong way; worth a closer look.'}`}));
+ const highlights=[`${tUp.tool} gained the most share of voice (${tUp.chg>0?'+':''}${tUp.chg.toFixed(1)} pts); ${tDn.tool} lost the most (${tDn.chg.toFixed(1)} pts).`,`${mUp.market} improved most (${mUp.chg>0?'+':''}${mUp.chg.toFixed(1)} pts share of the answer); ${mDn.market} slipped most (${mDn.chg.toFixed(1)} pts).`,...good.map(m=>`${m.name} improved: ${fc(m)}.`)];
+ const REC={'Accuracy issues flagged':'Correct the newly flagged facts at source, starting with the most-cited property pages.','AI crawler error rate':'Fix the pages returning errors to AI crawlers before they drop out of answers.','Release to index':'Check sitemaps and internal links on recent releases to bring indexing time back down.','Net sentiment in AI answers':'Review the negative mentions behind the drop and brief Communications on the themes.','Share of the answer':'Review the prompts where Hilton dropped out and refresh the pages AI tools cite for them.','Need-led visibility':'Brief Content on the need-led questions where Hilton lost ground.','AI citations of Hilton pages':'Refresh and restructure the Hilton pages that lost citations this week.'};
+ const recs=bad.map(m=>({action:REC[m.name]||`Investigate the drop in ${m.name.toLowerCase()} and agree a fix with the owning team.`,owner:m.owner,why:`${m.name} ${fc(m)} week on week.`}));
+ recs.push({action:`Look into why ${tDn.tool} lost share and test updated content against its prompts.`,owner:'Global Search & Discoverability',why:`${tDn.tool} share of voice ${tDn.chg.toFixed(1)} pts.`});
+ return {headline,callouts,highlights,recommendations:recs.slice(0,4)}}
+let aiCtl=null;
+function aiRender(R,live){const C=R.callouts||[],H=R.highlights||[],Rc=R.recommendations||[];
+ $('#aiOut').innerHTML=`<p class="ai-headline">${R.headline||''}</p>
+ <div class="ai-sec"><h3>Callouts</h3><div class="ai-grid">${C.slice(0,3).map(c=>`<div class="ai-call ${c.direction==='down'?'down':'up'}"><b>${c.title}</b><span class="v">${c.value||''}</span><p>${c.detail||''}</p></div>`).join('')}</div></div>
+ <div class="ai-sec"><h3>Highlights</h3><ul>${H.map(h=>`<li>${h}</li>`).join('')}</ul></div>
+ <div class="ai-sec"><h3>Recommendations</h3><div class="ai-recs">${Rc.map((r,i)=>`<div class="ai-rec"><span class="n">${i+1}</span><div><div>${r.action}</div>${r.why?`<div style="color:var(--muted);font-size:13px">${r.why}</div>`:''}<div class="own">Owner: ${r.owner||'GSD'}</div></div></div>`).join('')}</div></div>`;
+ $('#aiSrc').textContent=live?'Written by Claude from the synthetic data on this page. Check before sharing.':'Generated by rules from the synthetic data on this page.'}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function clean(R){const e=x=>typeof x==='string'?esc(x):'';return {headline:e(R.headline),callouts:(R.callouts||[]).map(c=>({title:e(c.title),value:e(c.value),detail:e(c.detail),direction:c.direction==='down'?'down':'up'})),highlights:(R.highlights||[]).map(e),recommendations:(R.recommendations||[]).map(r=>({action:e(r.action),owner:e(r.owner),why:e(r.why)}))}}
+async function openAI(){const dlg=$('#ai');const D=summaryData();
+ dlg.innerHTML=`<div class="dd-head"><div><span class="layer">${esc(D.context.view)} · ${esc(D.context.market)} · ${esc(D.context.brand)}</span><h2><span style="color:var(--sky)">✦</span> AI summary</h2><div style="font-size:14px;color:#B9CDE3;margin-top:6px">Last 7 days compared with the 7 days before</div></div>
+ <div style="display:flex;gap:8px"><button class="dd-close" id="aiRegen" style="background:transparent;color:var(--sky);border:1px solid var(--sky)">Regenerate</button><button class="dd-close" id="aiClose">Close</button></div></div>
+ <div class="ai-body"><div id="aiOut"><div class="ai-load"><p style="font-size:14px;color:var(--muted)">Reading 14 days of data across ${D.metrics.length} measures, ${D.tool.length} AI tools and ${D.mk.length} markets…</p><i style="width:92%"></i><i style="width:78%"></i><i style="width:85%"></i><i style="width:60%"></i></div></div>
+ <div class="ai-foot"><span id="aiSrc">Generating…</span><span>All figures synthetic</span></div></div>`;
+ if(!dlg.open)dlg.showModal();$('#aiClose').onclick=()=>dlg.close();$('#aiRegen').onclick=()=>openAI();
+ if(aiCtl)aiCtl.abort();aiCtl=new AbortController();const sig=aiCtl.signal;
+ let sample=null;try{if(window.claude&&window.claude.use)sample=await window.claude.use('sample')}catch(e){sample=null}
+ if(sample&&sample.json){
+  const payload={context:D.context,measures:D.metrics.map(m=>({name:m.name,unit:m.unit,previous_7_days:+m.prev.toFixed(2),last_7_days:+m.cur.toFixed(2),change:fc(m),good_direction:m.good,owner:m.owner})),share_of_voice_by_ai_tool:D.tool.map(x=>({tool:x.tool,previous:+x.prev.toFixed(1),last:+x.cur.toFixed(1)})),share_of_answer_by_market:D.mk.map(x=>({market:x.market,previous:+x.prev.toFixed(1),last:+x.cur.toFixed(1)}))};
+  const prompt=`You are an analyst writing a short weekly summary for Hilton's Global Search & Discoverability team about AI and search discoverability. Compare the last 7 days with the previous 7 days using ONLY the data below. Be specific with numbers, plain and concise, no hype. Return JSON only with this shape: {"headline": string (2 sentences), "callouts": [3 items {"title": measure name, "value": change like "+2.1 pts" or "-4.3%", "direction": "up" if the change is good for Hilton else "down", "detail": one sentence}], "highlights": [3 to 4 short sentences, including AI tool and market movements], "recommendations": [3 items {"action": one concrete next step, "owner": team name, "why": short evidence from the data}]}.\nDATA:\n${JSON.stringify(payload)}`;
+  try{const R=await sample.json(prompt,{signal:sig,modelTier:'default'});if(sig.aborted)return;
+   if(R&&R.headline&&Array.isArray(R.callouts)){aiRender(clean(R),true);return}}
+  catch(e){if(sig.aborted)return}
+ }
+ setTimeout(()=>{if(!sig.aborted)aiRender(localSummary(D),false)},900);
+}
+
 /* ---------- views ---------- */
 function leadership(){
  const k={irn:kpiData('irn'),soa:kpiData('soa'),dcc:kpiData('dcc')};
- const r=R('lead'+S.q);const rn=parseInt(k.irn.value.replace(/,/g,''));
- const exp=(r()*6+3).toFixed(1),attrib=Math.round(rn*.18),rev=(attrib*ADR/1e6).toFixed(1);
+ const r=R('lead'+S.q);const rp=k.irn.revpar;
+ const exp=(r()*6+3).toFixed(1),attrib=rp,rev=k.irn.total.toFixed(1);
  const mkt=S.market==='Global'?'globally':'in '+S.market;
  const sel=S.sel.leadership||'irn';
  return `
  <section class="loop" aria-label="This quarter in four steps">
-  <div><h3><em>01</em>What changed</h3><p>Incremental room nights ran ${exp}% above expected ${mkt} in ${QUARTERS[S.q]}, outside normal seasonal range.</p></div>
+  <div><h3><em>01</em>What changed</h3><p>Incremental RevPAR ran ${exp}% above expected ${mkt} in ${QUARTERS[S.q]}, outside normal seasonal range.</p></div>
   <div><h3><em>02</em>Likely factors</h3><p>Share of the answer rose ${k.soa.delta.toFixed(1)} pts, led by need-led family and wellness prompts. Paid media and promotions were flat.</p></div>
-  <div><h3><em>03</em>Commercial implication</h3><p>≈ ${fmt(attrib)} room nights and $${rev}M revenue linked to the visibility gain. Medium confidence: mix model plus two holdout tests.</p></div>
+  <div><h3><em>03</em>Commercial implication</h3><p>About $${(+rev).toFixed(0)}M in incremental revenue (+$${attrib.toFixed(2)} RevPAR) from improved discoverability this quarter. Medium confidence: mix model plus two holdout tests.</p></div>
   <div><h3><em>04</em>Recommended action</h3><p>Extend structured data to the remaining property pages in priority markets. Owner: Orchestration, Design &amp; Digital Marketing. Decision: approve sprint capacity.</p></div>
  </section>
  <div class="tiles" id="tiles">${VIEWS.leadership.kpis.map(id=>tile(id,id===sel)).join('')}</div>
  <div class="grid2">
-  <section class="panel"><h2>Share of the answer leads room nights</h2><p class="sub">Monthly, ${S.market}. Movement in AI answers shows up in commercial results about two months later.</p><div class="chart tall"><canvas id="cLead"></canvas></div></section>
-  <section class="panel"><h2>What drives incremental room nights</h2><p class="sub">Estimated contribution this quarter. Each team's measures sit behind one of these drivers.</p><div class="chart tall"><canvas id="cDrivers"></canvas></div></section>
+  <section class="panel"><h2>Share of the answer leads RevPAR</h2><p class="sub">Monthly, ${S.market}. Movement in AI answers shows up in commercial results about two months later.</p><div class="chart tall"><canvas id="cLead"></canvas></div></section>
+  <section class="panel"><h2>What drives incremental RevPAR</h2><p class="sub">Estimated contribution this quarter. Each team's measures sit behind one of these drivers.</p><div class="chart tall"><canvas id="cDrivers"></canvas></div></section>
  </div>
- ${detailPanel(sel)}
- <section class="panel"><h2>Data readiness</h2><p class="sub">Shown separately from the confidence stated on each figure.</p>
-  <div class="legend-ready"><span><span class="badge now">Now</span>${READY_TIP.now}</span><span><span class="badge connect">Connect</span>${READY_TIP.connect}</span><span><span class="badge scale">Scale</span>${READY_TIP.scale}</span></div>
- </section>`}
+ ${detailPanel(sel)}`}
 
 function teamView(v){const sel=S.sel[v]||VIEWS[v].kpis[0];
  return `<div class="tiles" id="tiles">${VIEWS[v].kpis.map(id=>tile(id,id===sel)).join('')}</div>${detailPanel(sel)}${v==='gsd'?sentimentPanel():''}${scorecard(v)}${toolMatrix(v)}${breakdown(v)}`}
@@ -760,7 +833,7 @@ function detailPanel(id){const k=kpiData(id);const body=id==='mco'?mcoTable():`<
  return `<section class="panel" style="margin-bottom:16px" aria-live="polite">
   <h2>${DETAIL_TITLE[id]}</h2><p class="sub">${k.why}</p>${body}
   <div class="feeds">${k.feeds}</div>
-  <div class="meta"><div><b>Building blocks</b>${k.blocks}</div><div><b>Reporting cuts</b>${k.report}</div><div><b>Readiness and confidence</b><span class="badge ${k.ready}">${READY[k.ready]}</span>&nbsp; ${confHtml(k.conf)}</div></div>
+  <div class="meta"><div><b>Building blocks</b>${k.blocks}</div><div><b>Reporting cuts</b>${k.report}</div><div><b>Confidence</b>${confHtml(k.conf)}</div></div>
  </section>`}
 
 function render(){
@@ -774,14 +847,14 @@ function render(){
  if(S.view==='gsd')sentimentCharts();
  if(S.view==='leadership'){
   const months=monthsEnding(S.q,18),soa=series('soam',18,18,.02,.03);const s=scale();
-  const rn=soa.map((v,i)=>(9000+ (soa[Math.max(0,i-2)])*900+R('n'+i)()*1500)*s);
-  mk('cLead',{type:'line',data:{labels:months,datasets:[{label:'Share of the answer (%)',data:soa,borderColor:'#022F5F',tension:.35,yAxisID:'y'},{label:'Incremental room nights',data:rn,borderColor:'#5A9BD5',backgroundColor:'rgba(169,219,255,.35)',fill:true,tension:.35,yAxisID:'y1'}]},
-   options:baseOpts({scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:9,font:{family:'Inter',size:12}}},y:{position:'left',ticks:{callback:v=>v+'%'}},y1:{position:'right',grid:{display:false},ticks:{callback:v=>fmt(v)}}}})});
-  const tot=parseInt(kpiData('irn').value.replace(/,/g,''));const r=R('drv'+S.q);
+  const rn=soa.map((v,i)=>(.2+(soa[Math.max(0,i-2)])*.012+R('n'+i)()*.08)*ROOMS*s/3/1e6);
+  mk('cLead',{type:'line',data:{labels:months,datasets:[{label:'Share of the answer (%)',data:soa,borderColor:'#022F5F',tension:.35,yAxisID:'y'},{label:'Incremental revenue from discoverability ($M)',data:rn,borderColor:'#5A9BD5',backgroundColor:'rgba(169,219,255,.35)',fill:true,tension:.35,yAxisID:'y1'}]},
+   options:baseOpts({scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:9,font:{family:'Inter',size:12}}},y:{position:'left',ticks:{callback:v=>v+'%'}},y1:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+v.toFixed(0)+'M'}}}})});
+  const tot=kpiData('irn').total;const r=R('drv'+S.q);
   const w=[.30+r()*.08,.24+r()*.08,.18+r()*.06,.10+r()*.05];const sum=w.reduce((a,b)=>a+b);
   const labels=['AI visibility (share of the answer)','Organic search visibility','Branded demand created','App and local visibility'];
-  mk('cDrivers',{type:'bar',data:{labels,datasets:[{label:'Room nights',data:w.map(x=>x/sum*tot),backgroundColor:['#022F5F','#2E5C8A','#5A9BD5','#A9DBFF'],borderRadius:6}]},
-   options:baseOpts({indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'#022F5F',callbacks:{label:c=>fmt(c.raw)+' room nights'}}},scales:{x:{ticks:{callback:v=>fmt(v)}},y:{grid:{display:false},ticks:{font:{family:'Inter',size:12},color:'#1B1B1B'}}}})});
+  mk('cDrivers',{type:'bar',data:{labels,datasets:[{label:'Incremental RevPAR',data:w.map(x=>x/sum*tot),backgroundColor:['#022F5F','#2E5C8A','#5A9BD5','#A9DBFF'],borderRadius:6}]},
+   options:baseOpts({indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'#022F5F',callbacks:{label:c=>'$'+c.raw.toFixed(0)+'M'}}},scales:{x:{ticks:{callback:v=>'$'+v.toFixed(0)+'M'}},y:{grid:{display:false},ticks:{font:{family:'Inter',size:12},color:'#1B1B1B'}}}})});
  }
  if(S.view!=='leadership'&&S.view!=='map'){
   document.querySelectorAll('#chips button').forEach(b=>b.addEventListener('click',()=>{S.layer[S.view]=b.dataset.l;
@@ -806,6 +879,8 @@ function render(){
  $('#fMarket').onchange=e=>{S.market=e.target.value;render()};
  $('#fBrand').onchange=e=>{S.brand=e.target.value;render()};
  $('#fQuarter').onchange=e=>{S.q=+e.target.value;render()};
+ $('#ai').addEventListener('close',()=>{if(aiCtl)aiCtl.abort()});
+ $('#ai').addEventListener('click',e=>{if(e.target.id==='ai')$('#ai').close()});
  $('#dd').addEventListener('close',()=>{while(ddCharts.length)ddCharts.pop().destroy()});
  $('#dd').addEventListener('click',e=>{if(e.target.id==='dd')$('#dd').close()});
  render();
