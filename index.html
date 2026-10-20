@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hilton Discoverability – Connected Measurement (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#022F5F; --navy-2:#0D3D70; --sky:#A9DBFF; --sky-soft:#E3F2FF;
+  --paper:#FCFCFB; --stone:#EDEDEC; --stone-2:#F5F5F3; --line:#DCDDDA;
+  --ink:#1B1B1B; --ink-2:#3A3D42; --muted:#5C6066;
+  --up:#1F7A5A; --down:#A8452F;
+  --serif:'Lora', Georgia, serif; --sans:'Inter', Arial, sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:#FCFCFB}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+/* layout */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.side{background:var(--navy);color:#F7F9FC;padding:28px 20px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh}
+.logos{display:flex;align-items:center;gap:12px;padding-bottom:20px;border-bottom:1px solid var(--navy-2)}
+.logo{height:32px;width:auto;max-width:110px;display:block}
+.logo-x{color:var(--sky);font-size:16px}
+.logo-fallback{font-family:var(--serif);font-weight:600;font-size:20px;color:#F7F9FC;letter-spacing:.5px}
+.brand{font-family:var(--serif);font-size:22px;line-height:1.2}
+.brand small{display:block;font-family:var(--sans);font-size:13px;color:var(--sky);margin-top:6px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-group{font-size:12px;color:#8FB0D3;margin:16px 10px 6px}
+.nav button{background:none;border:0;text-align:left;padding:10px 12px;border-radius:10px;color:#D9E6F5;cursor:pointer;font-size:14px;line-height:1.3}
+.nav button:hover{background:var(--navy-2)}
+.nav button[aria-current="page"]{background:var(--sky);color:var(--navy);font-weight:600}
+.side-foot{margin-top:auto;font-size:12px;color:#8FB0D3;line-height:1.5}
+
+.main{padding:28px 40px 56px;max-width:1440px;width:100%}
+.topbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.15;color:var(--ink)}
+.title p{color:var(--muted);margin-top:6px;max-width:68ch}
+.filters{display:flex;gap:12px;flex-wrap:wrap}
+.filters label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
+.filters select{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 32px 8px 12px;font-size:14px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--navy) 50%),linear-gradient(135deg,var(--navy) 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer}
+.synthetic{display:inline-block;margin-top:10px;font-size:12px;color:var(--navy);background:var(--sky-soft);border-radius:999px;padding:3px 10px}
+
+/* insight loop strip */
+.loop{display:grid;grid-template-columns:repeat(4,1fr);background:var(--navy);color:#F7F9FC;border-radius:20px;overflow:hidden;margin-bottom:24px}
+.loop div{padding:20px 22px;border-right:1px solid var(--navy-2)}
+.loop div:last-child{background:var(--sky);color:var(--navy);border:0}
+.loop h3{font-family:var(--serif);font-weight:600;font-size:17px;margin-bottom:6px}
+.loop h3 em{font-style:italic;font-weight:400;color:var(--sky);margin-right:6px}
+.loop div:last-child h3 em{color:var(--navy)}
+.loop p{font-size:14px;line-height:1.5;color:#D9E6F5}
+.loop div:last-child p{color:var(--navy)}
+
+/* KPI tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:24px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.tile:hover{border-color:var(--navy)}
+.tile[aria-pressed="true"]{border:2px solid var(--navy);padding:17px 19px;box-shadow:0 0 0 4px var(--sky-soft)}
+.tile .kind{font-size:12px;color:var(--muted)}
+.tile .name{font-family:var(--serif);font-weight:600;font-size:17px;line-height:1.25;color:var(--ink)}
+.tile .val{font-family:var(--serif);font-size:34px;line-height:1.1;color:var(--navy);margin-top:4px}
+.tile .val small{font-size:15px;color:var(--muted);font-family:var(--sans)}
+.tile .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.delta{font-size:13px;font-weight:600}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)}
+.badge{font-size:12px;border-radius:999px;padding:2px 10px;font-weight:500;white-space:nowrap}
+.badge.now{background:#DDF0E6;color:#165C43}
+.badge.connect{background:var(--sky-soft);color:var(--navy)}
+.badge.scale{background:var(--stone);color:var(--ink-2)}
+.tile svg{display:block;width:100%;height:36px;margin-top:4px}
+
+/* panels */
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;min-width:0}
+.panel h2{font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.3}
+.panel .sub{color:var(--muted);font-size:14px;margin:4px 0 14px;max-width:72ch}
+.chart{position:relative;height:300px}
+.chart.tall{height:340px}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);font-size:13px}
+.meta b{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:2px}
+.feeds{margin-top:12px;font-size:13px;color:var(--navy);background:var(--sky-soft);border-radius:10px;padding:8px 12px}
+.toggle{display:inline-flex;background:var(--stone);border-radius:999px;padding:3px;margin-bottom:12px}
+.toggle button{border:0;background:none;padding:5px 14px;border-radius:999px;font-size:13px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--navy);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px solid var(--stone)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.conf{display:inline-flex;gap:3px;vertical-align:middle}
+.conf i{width:10px;height:10px;border-radius:2px;background:var(--stone)}
+.conf i.on{background:var(--navy)}
+.legend-ready{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px}
+.legend-ready span{display:flex;gap:8px;align-items:center}
+
+
+/* scorecard + breakdowns */
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;font-size:13px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--sky-soft)}
+.scroll{overflow-x:auto}
+.scroll table{min-width:900px}
+td svg{display:block;width:110px;height:26px}
+.layer{font-size:12px;color:var(--muted)}
+.status{font-size:12px;font-weight:500;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.status.ok{background:#DDF0E6;color:#165C43}
+.status.risk{background:#FFF1D6;color:#7A5200}
+.status.behind{background:#F7E1DA;color:#8A3523}
+td.src{color:var(--muted);font-size:13px}
+td.heat{text-align:right;font-variant-numeric:tabular-nums}
+.count{font-size:13px;color:var(--muted)}
+
+
+/* deep dive */
+tr.rowlink{cursor:pointer}
+tr.rowlink:hover td{background:var(--stone-2)}
+.dd-btn{border:0;background:none;color:var(--navy);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+dialog.dd{position:fixed;inset:0;margin:auto;height:fit-content;border:0;border-radius:20px;padding:0;width:min(1180px,96vw);max-height:92vh;background:var(--paper);color:var(--ink);box-shadow:0 24px 64px rgba(2,47,95,.35)}
+dialog.dd::backdrop{background:rgba(2,47,95,.55)}
+.dd-head{background:var(--navy);color:#F7F9FC;padding:22px 28px;display:flex;justify-content:space-between;gap:20px;align-items:flex-start;position:sticky;top:0;z-index:2}
+.dd-head h2{font-family:var(--serif);font-weight:600;font-size:26px;line-height:1.2}
+.dd-head .layer{color:var(--sky)}
+.dd-kpis{display:flex;gap:28px;margin-top:12px;flex-wrap:wrap}
+.dd-kpis div{font-size:12px;color:#B9CDE3}
+.dd-kpis b{display:block;font-family:var(--serif);font-size:24px;font-weight:600;color:#F7F9FC}
+.dd-close{background:var(--sky);color:var(--navy);border:0;border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer}
+.dd-body{padding:22px 28px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dd-body .wide{grid-column:1/-1}
+.dd-body .chart{height:260px}
+.movers li{list-style:none;display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--stone);font-size:14px}
+@media (max-width:860px){.dd-body{grid-template-columns:1fr}}
+
+
+.excerpts{display:flex;flex-direction:column;gap:10px}
+.ex{border:1px solid var(--line);border-left:6px solid var(--line);border-radius:12px;padding:12px 16px;background:#fff}
+.ex.pos{border-left-color:var(--navy)} .ex.neg{border-left-color:#C9775F} .ex.neu{border-left-color:#C9CDD2} .ex.acc{border-left-color:#E0A800}
+.ex q{display:block;font-family:var(--serif);font-size:15px;line-height:1.5;quotes:none;margin:4px 0}
+.ex .m{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px}
+.tag.pos{background:var(--sky-soft);color:var(--navy)} .tag.neg{background:#F7E1DA;color:#8A3523} .tag.neu{background:var(--stone);color:var(--ink-2)} .tag.acc{background:#FFF1D6;color:#7A5200}
+
+/* semantic page map */
+.mkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.mkpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.mkpi .kind{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.mkpi .big{font-family:var(--serif);font-size:32px;color:var(--navy);line-height:1.15;margin-top:4px}
+.mkpi .small{font-size:13px;color:var(--muted);margin-top:10px} .mkpi .warn{font-size:13px;color:var(--down);font-weight:500;margin-top:10px}
+details.howto{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:16px}
+details.howto summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--navy)}
+.howgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+.how{background:var(--stone-2);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.how .num{width:32px;height:32px;border-radius:999px;background:var(--navy);color:var(--sky);font-family:var(--serif);font-style:italic;font-size:16px;display:flex;align-items:center;justify-content:center}
+.how h4{font-family:var(--serif);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink)}
+.how p{font-size:15px;line-height:1.6;color:var(--ink-2)}
+.how .dots{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--ink-2)}
+.how .dots span{display:flex;gap:6px;align-items:center}
+.how .dots i{width:12px;height:12px;border-radius:999px;display:inline-block}
+details.howto summary{font-size:15px}
+.mapwrap{display:grid;grid-template-columns:240px 1fr 280px;gap:16px}
+.mapbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.mapbar label{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.mapbar select{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;background:#fff}
+.clist{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;max-height:520px}
+.clist input[type=search]{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px}
+.citems{overflow:auto;display:flex;flex-direction:column;gap:2px}
+.citems label{display:flex;gap:8px;align-items:center;font-size:13px;padding:4px 2px;cursor:pointer}
+.citems label span.n{margin-left:auto;color:var(--muted);font-size:12px}
+.citems .sw{width:10px;height:10px;border-radius:999px;flex:none}
+.clinks{display:flex;gap:10px;font-size:12px}
+.clinks button{border:0;background:none;color:var(--navy);text-decoration:underline;cursor:pointer;font-size:12px}
+.mapc{position:relative;height:520px;border:1px solid var(--line);border-radius:12px;background:var(--paper);cursor:grab}
+.mapc:active{cursor:grabbing}
+.maptools{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:2}
+.maptools button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-size:13px;cursor:pointer}
+.mdetail{border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13px;color:var(--ink-2);display:flex;flex-direction:column;gap:10px}
+.mdetail h3{font-family:var(--serif);font-size:18px;line-height:1.3;color:var(--ink)}
+.mdetail .empty{color:var(--muted);text-align:center;margin:auto}
+.mlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:10px}
+.mlegend span{display:flex;gap:6px;align-items:center}
+.mlegend i{width:10px;height:10px;border-radius:999px;display:inline-block}
+.ctag{display:inline-block;font-size:12px;font-weight:500;border-radius:999px;padding:2px 10px;white-space:nowrap}
+th.sort{cursor:pointer} th.sort:hover{color:var(--navy)}
+.panel.fs{position:fixed;inset:0;z-index:40;border-radius:0;overflow:auto;margin:0}
+.panel.fs .mapc{height:calc(100vh - 150px)}
+@media (max-width:1100px){.howgrid{grid-template-columns:1fr 1fr}.mapwrap{grid-template-columns:1fr}.clist{max-height:240px}.mkpis{grid-template-columns:1fr}}
+
+@media (max-width:1100px){.grid2{grid-template-columns:1fr}.loop{grid-template-columns:1fr 1fr}}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;padding:18px 16px;gap:12px}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .nav-group,.side-foot{display:none}
+  .main{padding:20px 16px 40px}
+  .loop{grid-template-columns:1fr}
+  .meta{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logos">
+      <img src="hilton-logo.svg" alt="Hilton" class="logo" onerror="this.outerHTML='<span class=&quot;logo-fallback&quot;>Hilton</span>'">
+    </div>
+    <div class="brand">Connected measurement<small>Hilton Global Search &amp; Discoverability</small></div>
+    <nav class="nav" aria-label="Dashboard views" id="nav"></nav>
+    <p class="side-foot">Mockup for discussion. All figures are synthetic and do not reflect Hilton performance.</p>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title">
+        <h1 id="viewTitle"></h1>
+        <p id="viewSub"></p>
+        <span class="synthetic">Synthetic data</span>
+      </div>
+      <div class="filters">
+        <label>Market<select id="fMarket"></select></label>
+        <label>Brand<select id="fBrand"></select></label>
+        <label>Quarter<select id="fQuarter"></select></label>
+      </div>
+    </div>
+    <div id="view"></div>
+    <dialog class="dd" id="dd" aria-label="Measure deep dive"></dialog>
+  </main>
+</div>
+
+<script>
+/* ---------- synthetic data engine ---------- */
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){let a=seed;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const MARKETS={Global:1,'United States':.42,'United Kingdom':.09,Germany:.06,'United Arab Emirates':.04,Japan:.05,China:.07,Australia:.04};
+const REGIONAL=['Japan','China','Australia','United Arab Emirates','Germany','United Kingdom'];
+const BRANDS={'All brands':1,'Hilton Hotels & Resorts':.38,'Waldorf Astoria':.05,'Conrad':.07,'DoubleTree':.2,'Hampton':.3};
+const QUARTERS=['Q4 2024','Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026','Q2 2026','Q3 2026'];
+const ADR=212;
+const S={market:'Global',brand:'All brands',q:7,view:'leadership',sel:{},layer:{}};
+const R=k=>rng(hash(S.market+'|'+S.brand+'|'+k));
+const scale=()=>MARKETS[S.market]*BRANDS[S.brand];
+function series(key,n,start,drift,noise){
+ /* trend + seasonality + autocorrelated noise + occasional shocks */
+ const r=R(key),amp=noise*3*(.6+r()*.8),ph=r()*6.28,f=n>=12?.52:1.57;let trend=start,walk=0,out=[];
+ for(let i=0;i<n;i++){trend*=1+drift;walk=walk*.55+(r()-.5)*noise*3.5;const shock=r()<.1?(r()-.5)*noise*9:0;
+  out.push(Math.max(start*.05,trend*(1+amp*Math.sin(i*f+ph)+walk+shock)))}
+ return out}
+const upto=a=>a.slice(0,S.q+1);
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const pct=(n,d=0)=>n.toFixed(d)+'%';
+function monthsEnding(qi,n){const endM=(qi-0)*3+11;const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const out=[];for(let i=n-1;i>=0;i--){const m=endM-i;const y=2024+Math.floor(m/12);out.push(names[((m%12)+12)%12]+' '+String(y).slice(2))}return out}
+
+/* ---------- KPI catalogue (from the measurement framework) ---------- */
+const VIEWS={
+ leadership:{nav:'Leadership',group:'Quarterly',title:'Executive KPIs',
+  sub:'Four measures for quarterly leadership reporting. Three address commercial and loyalty outcomes; the fourth is a leading indicator of discoverability performance.',
+  kpis:['irn','dcc','hon','soa']},
+ gsd:{nav:'Global Search & Discoverability',group:'Team views',title:'Global Search & Discoverability',
+  sub:'Day-to-day measures for the team setting discoverability strategy, and how each one feeds the leadership view.',kpis:['nlv','sen','ita','ssa']},
+ sia:{nav:'Strategy, Insights & Analytics',group:'Team views',title:'Strategy, Insights & Analytics',
+  sub:'How much of the journey is observable, and how much weight each modeled figure can carry.',kpis:['ait','irr','mco']},
+ oddm:{nav:'Orchestration, Design & Digital Marketing',group:'Team views',title:'Orchestration, Design & Digital Marketing',
+  sub:'Whether search insight reaches content in time, and whether property pages are ready for AI-led discovery.',kpis:['itp','ppr','mmr']},
+ apac:{nav:'APAC',group:'Team views',title:'APAC',
+  sub:'Measured on the AI tools travelers in each market actually use, from Doubao and DeepSeek in China to Naver in Korea, against a competitive set led by marketplaces.',kpis:['mcs','lat','lpc','ilp']},
+ emea:{nav:'EMEA',group:'Team views',title:'EMEA',
+  sub:'In-language visibility across European and Middle Eastern markets, against other hotel groups and the large online travel agencies.',kpis:['ecs','lpc','ilp']},
+ map:{nav:'Semantic page map',group:'Explore',title:'Semantic page map',
+  sub:'Every page AI tools cite for travel questions, grouped by meaning. Gaps show where Hilton is absent from the answers.',kpis:[]}
+};
+const READY={now:'Now',connect:'Connect',scale:'Scale'};
+const READY_TIP={now:'Measurable today with current data',connect:'Needs data sources connected',scale:'Needs modeling at scale'};
+
+function kpiData(id){
+ const s=scale(),r=R(id+S.q),q=S.q;
+ const D={
+  irn:()=>{const a=upto(series('irn',8,52000,.07,.06)).map(v=>v*s*3.5);return{kind:'Commercial outcome',name:'Incremental room nights',value:fmt(a[q]),unit:'this quarter',delta:(a[q]/a[q-1]-1)*100,spark:a,ready:'scale',conf:3,
+    why:'Estimates additional room nights associated with discoverability activity, rather than attributing all channel bookings.',
+    blocks:'Room nights from AI- and organic-originated sessions; matched control pages; referral classification flag; stitched session ID',report:'By market and brand, by business unit, quarter on quarter',feeds:'Revenue impact: ≈ $'+fmt(a[q]*ADR/1e6*10/10)+'M at an average daily rate of $'+ADR+'.'}},
+  dcc:()=>{const a=upto(series('dcc',8,31,.025,.05));return{kind:'Supporting analysis',name:'Demand created vs captured',value:pct(a[q]),unit:'created',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:2,
+    why:'Assesses whether discoverability activity is associated with new demand, or demand Hilton would likely have captured anyway.',
+    blocks:'Search and prompt volume by territory; branded against non-branded demand; mix model channel inputs',report:'Created against captured, by market, by prompt territory',feeds:'Higher created share means discoverability is growing demand, not just harvesting it.'}},
+  hon:()=>{const a=upto(series('hon',8,14200,.05,.06)).map(v=>v*s);return{kind:'Loyalty outcome',name:'Honors joins before first stay',value:fmt(a[q]),unit:'this quarter',delta:(a[q]/a[q-1]-1)*100,spark:a,ready:'connect',conf:2,
+    why:'Tracks loyalty enrollment linked to discovery ahead of a guest\'s first stay, rather than at booking.',
+    blocks:'Enrollment events with timestamp; first stay date; source classification; Honors ID',report:'By market and brand, discovery against booking',feeds:'Earlier enrollment builds a direct relationship before an OTA can claim the guest.'}},
+  soa:()=>{const a=upto(series('soa',8,22,.045,.04));return{kind:'Leading indicator',name:'Share of the answer',value:pct(a[q]),unit:'of priority AI answers',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:3,
+    why:'Tracks Hilton\'s presence in responses to priority AI discovery questions. Moves ahead of commercial measures.',
+    blocks:'Prompt set by market and intent; responses captured per AI tool; Hilton and competitor mentions',report:'By AI tool, by market and language, brand-led against need-led',feeds:'Leads incremental room nights by roughly two months in this period.'}},
+  nlv:()=>{const a=upto(series('nlv',8,14,.06,.05));return{kind:'Team measure',name:'Need-led visibility',value:pct(a[q]),unit:'of need-led prompts',delta:a[q]-a[q-1],pts:true,spark:a,ready:'now',conf:3,
+    why:'Hilton performs strongly on brand-led queries. Need-led queries are where the growth opportunity sits.',
+    blocks:'Prompt set split brand-led and need-led; visibility per prompt; citation position; competitor visibility',report:'By prompt territory, by market and brand, direction period on period',feeds:'Feeds the leadership view through share of the answer.'}},
+  sen:()=>{const a=upto(series('sen',8,29,.04,.06));return{kind:'Team measure',name:'AI answer sentiment',value:(a[q]>0?'+':'')+Math.round(a[q]),unit:'net sentiment',delta:a[q]-a[q-1],pts:true,spark:a,ready:'now',conf:2,
+    why:'How AI tools describe Hilton when they mention it, not just whether they do. Net sentiment is the share of positive mentions minus the share of negative ones.',
+    blocks:'Responses captured per AI tool; mention-level sentiment classification; attribute tagging; competitor mentions; factual accuracy checks',report:'By AI tool, by attribute, by market and language, against competitors',feeds:'Positive mentions turn visibility into recommendations, which lifts share of the answer.'}},
+  ita:()=>{const a=upto(series('ita',8,46,-.05,.06));return{kind:'Team measure',name:'Insight to action',value:Math.round(a[q]),unit:'days, median',delta:a[q]-a[q-1],invert:true,spark:a,ready:'connect',conf:2,
+    why:'Shows how long a recommendation takes to reach implementation, where the team currently loses most time.',
+    blocks:'Date finding raised; date owner assigned; date change released; priority level',report:'Days per stage, by team and priority, where work stalls',feeds:'Faster action brings visibility gains, and their room nights, forward.'}},
+  ssa:()=>{const a=upto(series('ssa',8,18,.12,.05));return{kind:'Team measure',name:'Self-service adoption',value:pct(Math.min(a[q],92)),unit:'of provisioned users active',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:2,
+    why:'Indicates how far a nine-person team can extend its reach without becoming a bottleneck.',
+    blocks:'Users provisioned; active users in period; actions completed without GSD involvement',report:'By team, by region, by property group',feeds:'Each action taken without GSD frees the team for need-led growth work.'}},
+  ait:()=>{const a=upto(series('ait',8,24,.09,.05));return{kind:'Team measure',name:'AI traffic identified',value:pct(Math.min(a[q],88)),unit:'of likely AI sessions',delta:a[q]-a[q-1],pts:true,spark:a,ready:'scale',conf:2,
+    why:'Most AI-referred traffic records as direct today, which understates the channel\'s contribution.',
+    blocks:'Known AI referrer list; ChatGPT UTM parameter; landing page and market context; sessions with no identifiable source',report:'Identified against direct, by source and market, confirmed against inferred',feeds:'More identified traffic means a truer read of how AI discovery drives bookings.'}},
+  irr:()=>{const a=upto(series('irr',8,41,.03,.03));return{kind:'Team measure',name:'Identity resolution rate',value:pct(a[q]),unit:'of sessions resolved',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:3,
+    why:'Establishes how much of the journey is directly observable before any modeling is applied.',
+    blocks:'Honors ID; web identifier; app identifier; unresolved sessions',report:'By surface and market, authenticated against anonymous',feeds:'Sets how much of the leadership view is observed rather than modeled.'}},
+  mco:()=>{const a=upto(series('mco',8,52,.05,.04));return{kind:'Team measure',name:'Model confidence',value:pct(Math.min(a[q],90)),unit:'of contribution calibrated',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:2,
+    why:'Establishes how much weight a modeled contribution figure can carry. Separate from whether it is reportable.',
+    blocks:'Holdout test results; measured lift; prior and posterior coefficients',report:'By test and channel, coefficient movement period on period',feeds:'Sets the confidence stated against every leadership figure.'}},
+  itp:()=>{const a=upto(series('itp',8,38,-.04,.06));return{kind:'Team measure',name:'Insight to publication',value:Math.round(a[q]),unit:'days, median',delta:a[q]-a[q-1],invert:true,spark:a,ready:'scale',conf:2,
+    why:'Search insight currently arrives late in the content process, which limits its influence on the work.',
+    blocks:'Date insight delivered; date brief written; publication date; date indexed',report:'Days per stage, by team and content type, by market',feeds:'Earlier insight shapes content before it ships, not after.'}},
+  ppr:()=>{const a=upto(series('ppr',8,34,.08,.04));return{kind:'Team measure',name:'Property page readiness',value:pct(Math.min(a[q],95)),unit:'of property pages ready',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:3,
+    why:'Property content cannot be maintained manually at this scale. Coverage indicates progress toward automation.',
+    blocks:'Page inventory across the portfolio; structured data present or absent; answer-formatted content present or absent',report:'By brand and market, by property tier',feeds:'Ready pages are the ones AI tools can cite, which lifts share of the answer.'}},
+  mmr:()=>{const a=upto(series('mmr',8,29,.05,.05));return{kind:'Team measure',name:'Merchandising match rate',value:pct(a[q]),unit:'of demand themes with a matching offer',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:1,
+    why:'Off-site intent signals are not currently used in merchandising decisions.',
+    blocks:'Off-site search and prompt demand by theme; on-site behavior; offer inventory available by market',report:'By offer, by market, by audience',feeds:'Matching offers to demand turns visibility into bookings.'}},
+  mcs:()=>{const a=upto(series('mcs',8,17,.04,.05));return{kind:'Regional measure',name:'Marketplace citation share',value:pct(a[q]),unit:'of citations go to Hilton',delta:a[q]-a[q-1],pts:true,spark:a,ready:'now',conf:3,
+    why:'In APAC the relevant competitive set is marketplaces rather than other hotel brands.',
+    blocks:'Regional prompt set in local language; responses captured; each cited source attributed to an OTA, Hilton or another party',report:'By market and language, by trip type',feeds:'Citations won back from marketplaces are direct-booking opportunities.'}},
+  lat:()=>{const a=upto(series('lat',8,11,.06,.07));return{kind:'Regional measure',name:'Visibility in local AI tools',value:pct(a[q]),unit:'of answers in Doubao, DeepSeek, Naver and peers',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:2,
+    why:'In China and Korea, travelers plan with local AI tools that US-centric tracking does not cover. Hilton\'s visibility there needs its own prompt set and its own read.',
+    blocks:'Local-language prompt sets per tool; responses captured from Doubao, DeepSeek, Yuanbao, Qwen and Quark, Baidu ERNIE, Kimi and Naver; cited source attribution',report:'By AI tool, by market, Hilton against marketplaces',feeds:'Feeds share of the answer for China and Korea, which Western tools cannot measure.'}},
+  ecs:()=>{const a=upto(series('ecs',8,21,.035,.05));return{kind:'Regional measure',name:'Share of the answer vs hotel groups',value:pct(a[q]),unit:'Hilton share of hotel mentions',delta:a[q]-a[q-1],pts:true,spark:a,ready:'now',conf:3,
+    why:'In EMEA, AI answers name other hotel groups and the large online travel agencies side by side. This is Hilton\'s share of the hotel mentions.',
+    blocks:'In-language prompt sets per market; responses per AI tool; mentions of Hilton, other hotel groups and online travel agencies',report:'By market and language, by AI tool, by trip type',feeds:'Feeds share of the answer in the leadership view for EMEA markets.'}},
+  ilp:()=>{const a=upto(series('ilp'+S.view,8,58,.035,.03));return{kind:'Regional measure',name:'In-language parity',value:pct(Math.min(a[q],97)),unit:'of priority content in local language',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:3,
+    why:'Content that does not exist in a local language cannot be found in that market.',
+    blocks:'Priority content inventory in English; local language equivalent present or absent; consistency check between the two',report:'By market and language, by content type',feeds:'Parity is the precondition for in-market visibility.'}},
+  lpc:()=>{const a=upto(series('lpc'+S.view,8,26,.05,.05));return{kind:'Regional measure',name:'Local prompt coverage',value:pct(a[q]),unit:'visibility on in-market prompts',delta:a[q]-a[q-1],pts:true,spark:a,ready:'connect',conf:2,
+    why:'Prompts translated from English measure different questions from those travelers actually ask.',
+    blocks:'Market-specific questions written in-market; visibility per prompt; citation position; regional competitor set',report:'By market and brand, against regional competitors',feeds:'Feeds share of the answer for each regional market.'}}
+ };
+ return D[id]();
+}
+
+/* ---------- rendering helpers ---------- */
+const $=s=>document.querySelector(s);
+const charts=[];
+function clearCharts(){while(charts.length)charts.pop().destroy()}
+function spark(a){const w=200,h=36,min=Math.min(...a),max=Math.max(...a),r=max-min||1;
+ const pts=a.map((v,i)=>[(i/(a.length-1))*w,h-4-((v-min)/r)*(h-8)]);
+ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#022F5F" stroke-width="2" points="${pts.map(p=>p.join(',')).join(' ')}"/><circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="3" fill="#022F5F"/></svg>`}
+function deltaHtml(k){const d=k.delta,good=k.invert?d<0:d>0;const unit=k.pts?' pts':(k.invert?' days':'%');
+ return `<span class="delta ${good?'up':'down'}">${d>0?'+':''}${d.toFixed(1)}${unit} vs last quarter</span>`}
+function confHtml(n){return `<span class="conf" title="${['','Low','Medium','High'][n]} confidence">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span> ${['','Low','Medium','High'][n]}`}
+function tile(id,selected){const k=kpiData(id);
+ return `<button class="tile" aria-pressed="${selected}" data-k="${id}">
+  <div class="row"><span class="kind">${k.kind}</span><span class="badge ${k.ready}" title="${READY_TIP[k.ready]}">${READY[k.ready]}</span></div>
+  <span class="name">${k.name}</span>
+  <span class="val">${k.value} <small>${k.unit}</small></span>
+  ${deltaHtml(k)}${spark(k.spark)}</button>`}
+const baseOpts=(extra={})=>Object.assign({responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+ plugins:{legend:{labels:{font:{family:'Inter',size:12},boxWidth:12,color:'#3A3D42'}},tooltip:{backgroundColor:'#022F5F',titleFont:{family:'Inter'},bodyFont:{family:'Inter'}}},
+ scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',size:12},color:'#5C6066'}},y:{grid:{color:'#EDEDEC'},ticks:{font:{family:'Inter',size:12},color:'#5C6066'}}}},extra);
+function mk(id,cfg){const c=new Chart(document.getElementById(id),cfg);charts.push(c);return c}
+
+/* ---------- detail charts per KPI ---------- */
+function detailChart(id,cid){
+ const r=R('d'+id+S.q),s=scale(),months=monthsEnding(S.q,12);
+ const C={
+  irn:()=>{const q=upto(QUARTERS),a=upto(series('irn',8,52000,.07,.06)).map(v=>v*s*3.5);
+   mk(cid,{type:'bar',data:{labels:q,datasets:[{label:'Incremental room nights',data:a,backgroundColor:a.map((_,i)=>i===S.q?'#022F5F':'#A9DBFF'),borderRadius:6}]},options:baseOpts({plugins:{legend:{display:false}}})})},
+  dcc:()=>{const mk_=REGIONAL.concat(['United States']);const cr=mk_.map(m=>20+rng(hash(m+S.q))()*25);
+   mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'Created',data:cr,backgroundColor:'#022F5F',borderRadius:4},{label:'Captured',data:cr.map(v=>100-v),backgroundColor:'#A9DBFF',borderRadius:4}]},options:baseOpts({indexAxis:'y',scales:{x:{stacked:true,max:100,ticks:{callback:v=>v+'%'}},y:{stacked:true,grid:{display:false}}}})})},
+  hon:()=>{const before=series('honb',12,820,.03,.08).map(v=>v*s*5),at=series('hona',12,1900,.005,.06).map(v=>v*s*5);
+   mk(cid,{type:'line',data:{labels:months,datasets:[{label:'Joined before first stay',data:before,borderColor:'#022F5F',backgroundColor:'rgba(2,47,95,.08)',fill:true,tension:.35},{label:'Joined at booking',data:at,borderColor:'#8A9097',borderDash:[6,5],tension:.35}]},options:baseOpts()})},
+  soa:()=>{const tools=['ChatGPT','Gemini','Perplexity','Copilot','AI Overviews'];const h=tools.map(t=>12+rng(hash(t+S.market+S.q))()*22),c=tools.map(t=>10+rng(hash(t+'c'+S.q))()*18);
+   mk(cid,{type:'bar',data:{labels:tools,datasets:[{label:'Hilton',data:h,backgroundColor:'#022F5F',borderRadius:6},{label:'Strongest competitor',data:c,backgroundColor:'#C9CDD2',borderRadius:6}]},options:baseOpts({scales:{y:{ticks:{callback:v=>v+'%'}}}})})},
+  nlv:()=>{const b=series('nlvb',12,68,.004,.022),n=series('nlvn',12,11,.03,.13);
+   mk(cid,{type:'line',data:{labels:months,datasets:[{label:'Brand-led prompts',data:b,borderColor:'#8A9097',borderDash:[6,5],tension:.3},{label:'Need-led prompts',data:n,borderColor:'#022F5F',backgroundColor:'rgba(169,219,255,.35)',fill:true,tension:.3}]},options:baseOpts({scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}})})},
+  sen:()=>{const p=series('senp',12,46,.012,.04),n=series('senn',12,17,-.015,.06),u=p.map((v,i)=>100-v-n[i]);
+   mk(cid,{type:'bar',data:{labels:months,datasets:[{label:'Positive',data:p,backgroundColor:'#022F5F'},{label:'Neutral',data:u,backgroundColor:'#C9CDD2'},{label:'Negative',data:n,backgroundColor:'#C9775F'}]},options:baseOpts({scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}})})},
+  ita:()=>{const teams=['Content','Product','Engineering','Regional','Social'];
+   const st=['Raised to owner','Owner to release'];const d1=teams.map(t=>4+rng(hash(t+'1'+S.q))()*10),d2=teams.map(t=>10+rng(hash(t+'2'+S.q))()*40);
+   mk(cid,{type:'bar',data:{labels:teams,datasets:[{label:st[0],data:d1,backgroundColor:'#A9DBFF',borderRadius:4},{label:st[1],data:d2,backgroundColor:'#022F5F',borderRadius:4}]},options:baseOpts({indexAxis:'y',scales:{x:{stacked:true,title:{display:true,text:'Median days',font:{family:'Inter'}}},y:{stacked:true,grid:{display:false}}}})})},
+  ssa:()=>{const reg=['Americas','EMEA','APAC','Brands','Properties'];const prov=reg.map(t=>40+rng(hash(t+S.q))()*160),act=prov.map((v,i)=>v*(.3+rng(hash(reg[i]+'a'+S.q))()*.5));
+   mk(cid,{type:'bar',data:{labels:reg,datasets:[{label:'Users provisioned',data:prov,backgroundColor:'#C9CDD2',borderRadius:6},{label:'Active this quarter',data:act,backgroundColor:'#022F5F',borderRadius:6}]},options:baseOpts()})},
+  ait:()=>{const id_=series('aiti',12,9,.06,.05).map(v=>v*s*1000),inf=series('aitf',12,6,.04,.05).map(v=>v*s*1000),un=series('aitu',12,22,.01,.04).map(v=>v*s*1000);
+   mk(cid,{type:'line',data:{labels:months,datasets:[{label:'Confirmed AI sessions',data:id_,borderColor:'#022F5F',backgroundColor:'#022F5F',fill:'origin',tension:.3},{label:'Inferred AI sessions',data:inf.map((v,i)=>v+id_[i]),borderColor:'#5A9BD5',backgroundColor:'#A9DBFF',fill:'-1',tension:.3},{label:'Still recorded as direct',data:un.map((v,i)=>v+inf[i]+id_[i]),borderColor:'#C9CDD2',backgroundColor:'#EDEDEC',fill:'-1',tension:.3}]},options:baseOpts({scales:{y:{stacked:false,ticks:{callback:v=>fmt(v)}}}})})},
+  irr:()=>{const surf=['Web desktop','Web mobile','App iOS','App Android'];const au=surf.map((t,i)=>(i>1?55:18)+rng(hash(t+S.q))()*20);
+   mk(cid,{type:'bar',data:{labels:surf,datasets:[{label:'Authenticated',data:au,backgroundColor:'#022F5F',borderRadius:4},{label:'Anonymous',data:au.map(v=>100-v),backgroundColor:'#EDEDEC',borderRadius:4}]},options:baseOpts({scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}})})},
+  mco:()=>null,
+  itp:()=>{const types=['Destination guides','Property pages','Offers','Events','Brand stories'];const ds=['Insight to brief','Brief to publish','Publish to indexed'];const cols=['#A9DBFF','#022F5F','#8A9097'];
+   mk(cid,{type:'bar',data:{labels:types,datasets:ds.map((l,j)=>({label:l,data:types.map(t=>(j===1?10:3)+rng(hash(t+j+S.q))()*(j===1?22:9)),backgroundColor:cols[j],borderRadius:4}))},options:baseOpts({indexAxis:'y',scales:{x:{stacked:true,title:{display:true,text:'Median days',font:{family:'Inter'}}},y:{stacked:true,grid:{display:false}}}})})},
+  ppr:()=>{const br=['Waldorf Astoria','Conrad','Hilton Hotels','DoubleTree','Hampton','Home2'];
+   mk(cid,{type:'bar',data:{labels:br,datasets:[{label:'Structured data present',data:br.map(b=>45+rng(hash(b+'s'+S.q))()*45),backgroundColor:'#022F5F',borderRadius:6},{label:'Answer-formatted content',data:br.map(b=>15+rng(hash(b+'a'+S.q))()*45),backgroundColor:'#A9DBFF',borderRadius:6}]},options:baseOpts({scales:{y:{max:100,ticks:{callback:v=>v+'%'}}}})})},
+  mmr:()=>{const th=['Family beach','City breaks','Ski','Wellness','Business','Weddings'];
+   mk(cid,{type:'bar',data:{labels:th,datasets:[{label:'Off-site demand index',data:th.map(t=>40+rng(hash(t+'d'+S.q))()*60),backgroundColor:'#022F5F',borderRadius:6},{label:'Offer availability index',data:th.map(t=>20+rng(hash(t+'o'+S.q))()*70),backgroundColor:'#C9CDD2',borderRadius:6}]},options:baseOpts()})},
+  mcs:()=>{const mk_=['Japan','China','Australia','Singapore','Korea','India'];const h=mk_.map(m=>10+rng(hash(m+'h'+S.q))()*18),o=mk_.map(m=>45+rng(hash(m+'o'+S.q))()*25);
+   mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'Hilton',data:h,backgroundColor:'#022F5F',borderRadius:4},{label:'Online travel agencies',data:o,backgroundColor:'#8A9097',borderRadius:4},{label:'Other sources',data:h.map((v,i)=>100-v-o[i]),backgroundColor:'#EDEDEC',borderRadius:4}]},options:baseOpts({scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}})})},
+  lat:()=>{const tools=['Doubao','DeepSeek','Yuanbao','Qwen and Quark','Baidu ERNIE','Kimi','Naver'];
+   mk(cid,{type:'bar',data:{labels:tools,datasets:[{label:'Hilton',data:tools.map(x=>5+rng(hash(x+'h'+S.q))()*20),backgroundColor:'#022F5F',borderRadius:6},{label:'Leading marketplace',data:tools.map(x=>15+rng(hash(x+'o'+S.q))()*30),backgroundColor:'#8A9097',borderRadius:6}]},options:baseOpts({scales:{y:{ticks:{callback:v=>v+'%'}}}})})},
+  ecs:()=>{const mk_=['United Kingdom','Germany','France','Spain','Italy','UAE','Saudi Arabia'];const h=mk_.map(m=>14+rng(hash(m+'h'+S.q))()*16),g=mk_.map(m=>25+rng(hash(m+'g'+S.q))()*15),o=mk_.map(m=>28+rng(hash(m+'o'+S.q))()*14);
+   mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'Hilton',data:h,backgroundColor:'#022F5F',borderRadius:4},{label:'Other hotel groups',data:g,backgroundColor:'#5A9BD5',borderRadius:4},{label:'Online travel agencies',data:o,backgroundColor:'#8A9097',borderRadius:4},{label:'Other sources',data:h.map((v,i)=>Math.max(0,100-v-g[i]-o[i])),backgroundColor:'#EDEDEC',borderRadius:4}]},options:baseOpts({scales:{x:{stacked:true},y:{stacked:true,max:100,ticks:{callback:v=>v+'%'}}}})})},
+  ilp:()=>{const mk_=S.view==='apac'?['Japanese','Simplified Chinese','Traditional Chinese','Korean','Thai','Vietnamese','Bahasa Indonesia']:['German','French','Spanish','Italian','Arabic','Turkish','Dutch'];
+   mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'Priority content available in language',data:mk_.map(m=>35+rng(hash(m+S.q))()*60),backgroundColor:mk_.map(m=>'#022F5F'),borderRadius:6}]},options:baseOpts({plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{callback:v=>v+'%'}}}})})},
+  lpc:()=>{const mk_=S.view==='apac'?['Japan','China','Korea','Singapore','Australia','India']:['United Kingdom','Germany','France','Spain','UAE','Saudi Arabia'];
+   mk(cid,{type:'bar',data:{labels:mk_,datasets:[{label:'In-market prompts',data:mk_.map(m=>15+rng(hash(m+'i'+S.q))()*25),backgroundColor:'#022F5F',borderRadius:6},{label:'Prompts translated from English',data:mk_.map(m=>25+rng(hash(m+'t'+S.q))()*30),backgroundColor:'#C9CDD2',borderRadius:6}]},options:baseOpts({scales:{y:{ticks:{callback:v=>v+'%'}}}})})}
+ };
+ return C[id]();
+}
+const DETAIL_TITLE={irn:'Incremental room nights by quarter',dcc:'Demand created vs captured, by market',hon:'Honors joins, before first stay vs at booking',soa:'Share of the answer by AI tool',
+ nlv:'Visibility on brand-led vs need-led prompts',sen:'Share of Hilton mentions that are positive, neutral or negative',ita:'Where work stalls: days per stage, by team',ssa:'Self-service adoption by group',ait:'AI sessions: confirmed, inferred, and still recorded as direct',
+ irr:'Authenticated vs anonymous sessions, by surface',mco:'Calibration by channel',itp:'Days per stage, by content type',ppr:'Property page readiness by brand',mmr:'Demand themes vs offer availability',
+ mcs:'Who gets cited in APAC answers',lat:'Hilton visibility in local AI tools',ecs:'Who gets named in EMEA answers, by market',ilp:'Priority content available in each language',lpc:'Visibility: in-market vs translated prompts'};
+
+function mcoTable(){const ch=['Organic search','AI citations','Branded demand','Paid search','Paid social','CRM'];
+ return `<table><thead><tr><th>Channel</th><th class="num">Holdout tests</th><th class="num">Measured lift</th><th class="num">Prior</th><th class="num">Posterior</th><th>Confidence</th></tr></thead><tbody>`+
+ ch.map(c=>{const r=rng(hash(c+S.q+S.market));const t=Math.floor(r()*4),l=(2+r()*9),p=(.1+r()*.4),po=p*(.7+r()*.6),cf=t>=2?3:t===1?2:1;
+ return `<tr><td>${c}</td><td class="num">${t}</td><td class="num">${t?'+'+l.toFixed(1)+'%':'–'}</td><td class="num">${p.toFixed(2)}</td><td class="num">${po.toFixed(2)}</td><td>${confHtml(cf)}</td></tr>`}).join('')+'</tbody></table>'}
+
+
+/* ---------- extended team scorecards ---------- */
+const METRICS={
+ gsd:[['AI share of voice','Visibility · AI','%',22,.04,1,'Bluefish, ArcAI'],['AI citation rate','Visibility · AI','%',18,.035,1,'Bluefish, ArcAI'],['AI citations','Visibility · AI','count',41000,.05,1,'Bluefish, ArcAI'],['AI mentions','Visibility · AI','count',88000,.04,1,'Bluefish'],['Average citation position','Visibility · AI','pos',3.4,-.02,0,'Bluefish'],['Recommendation inclusion','Visibility · AI','%',27,.03,1,'Bluefish'],['Sentiment in AI answers','Visibility · AI','score',71,.008,1,'Bluefish'],['Factual accuracy in AI answers','Visibility · AI','%',86,.006,1,'Bluefish'],['Positive mention share','Visibility · AI','%',46,.012,1,'Bluefish'],['Negative mention share','Visibility · AI','%',17,-.015,0,'Bluefish'],['Net sentiment vs competitors','Visibility · AI','pts',6,.08,1,'Bluefish'],['Accuracy issues flagged','Visibility · AI','n',140,-.06,0,'Bluefish'],['Need-led visibility','Visibility · AI','%',14,.06,1,'Bluefish, ArcAI'],['Nonbrand share of voice','Visibility · Search','%',19,.02,1,'SEOClarity, SEMrush'],['Keywords in top 3','Visibility · Search','count',12400,.03,1,'SEOClarity'],['Organic impressions','Visibility · Search','count',48e6,.03,1,'Search Console'],['Organic click-through rate','Visibility · Search','%',3.1,.01,1,'Search Console'],['Branded search demand','Visibility · Search','count',21e6,.02,1,'Search Console'],['App store keyword rank share','Visibility · App and local','%',31,.02,1,'AppTweak'],['App store impressions','Visibility · App and local','count',9.4e6,.03,1,'AppTweak'],['Local profile actions','Visibility · App and local','count',2.6e6,.03,1,'Local listings'],['AI referral sessions','Response','count',410000,.08,1,'Adobe CJA'],['Organic sessions','Response','count',31e6,.02,1,'Adobe CJA'],['Engaged session rate','Response','%',58,.01,1,'Adobe CJA'],['Insight to action','Operations','days',46,-.05,0,'Release log'],['Self-service adoption','Operations','%',18,.12,1,'Adobe CJA']],
+ sia:[['AI traffic identified','Data','%',24,.09,1,'Adobe CJA'],['Confirmed AI sessions','Data','count',190000,.08,1,'Adobe CJA'],['Inferred AI sessions','Data','count',140000,.05,1,'Adobe CJA'],['Sessions with no identifiable source','Data','count',2.1e6,-.02,0,'Adobe CJA'],['Identity resolution rate','Data','%',41,.03,1,'Adobe CJA'],['Authenticated app sessions','Data','%',63,.015,1,'Adobe CJA'],['Model confidence','Data','%',52,.05,1,'Mix model'],['Holdout tests completed','Data','n',3,.25,1,'Test log'],['Data freshness','Data','hours',30,-.06,0,'Adobe Experience Platform'],['Pipeline health','Data','%',94,.005,1,'Adobe Experience Platform'],['AI referral engaged rate','Response','%',64,.01,1,'Adobe CJA'],['Cross-page engagement','Response','pages',4.1,.01,1,'Adobe CJA'],['Shopping conversion, AI referrals','Response','%',4.6,.02,1,'Adobe CJA'],['Shopping conversion, organic','Response','%',3.2,.01,1,'Adobe CJA'],['Bookings from AI-originated sessions','Outcome','count',21000,.09,1,'Adobe CJA'],['Room nights, AI and organic sessions','Outcome','count',1.9e6,.03,1,'Adobe CJA'],['Revenue, AI and organic sessions','Outcome','usd',410e6,.03,1,'Adobe CJA'],['Incremental lift, holdout tests','Outcome','%',6.2,.04,1,'Test log'],['Weekly dashboard users','Operations','n',140,.08,1,'Adobe CJA']],
+ oddm:[['Pages optimized','Intervention','count',3200,.06,1,'CMS release log'],['Technical fixes shipped','Intervention','n',46,.05,1,'Release log'],['GEO content published','Intervention','count',420,.08,1,'CMS release log'],['Pages changed and indexed','Intervention','%',71,.03,1,'Search Console'],['Time from release to indexing','Intervention','days',6.5,-.05,0,'Search Console'],['Insight to publication','Intervention','days',38,-.04,0,'Release log'],['Content reuse rate','Intervention','%',22,.05,1,'CMS'],['Metadata quality score','Intervention','score',68,.02,1,'SEOClarity'],['Effort to activate a recommendation','Intervention','hours',14,-.04,0,'Release log'],['Structured data coverage','Technical','%',48,.06,1,'SEOClarity'],['Answer-formatted coverage','Technical','%',21,.08,1,'SEOClarity'],['Rich-result eligibility','Technical','%',39,.05,1,'Search Console'],['Core Web Vitals pass rate','Technical','%',62,.03,1,'Search Console'],['Index coverage','Technical','%',83,.01,1,'Search Console'],['Crawl efficiency','Technical','%',67,.02,1,'SEOClarity'],['AI crawler visits','Technical','count',5.8e6,.07,1,'Brand Visibility'],['AI crawler error rate','Technical','%',7.5,-.06,0,'Brand Visibility'],['Property page readiness','Technical','%',34,.08,1,'SEOClarity'],['Merchandising match rate','Response','%',29,.05,1,'Adobe CJA']],
+ apac:[['Marketplace citation share','Visibility','%',17,.04,1,'Bluefish'],['OTA citation share','Visibility','%',58,-.015,0,'Bluefish'],['Visibility in local AI tools','Visibility','%',11,.06,1,'Bluefish, local prompt capture'],['AI share of voice, local language','Visibility','%',15,.05,1,'Bluefish, ArcAI'],['Local prompt coverage','Visibility','%',26,.05,1,'Bluefish'],['Citation position vs regional set','Visibility','pos',4.2,-.02,0,'Bluefish'],['Sentiment in local AI answers','Visibility','score',66,.01,1,'Bluefish'],['Local search engine visibility','Visibility','%',23,.03,1,'Baidu, Naver, Yahoo! JAPAN'],['In-language parity','Content','%',58,.035,1,'CMS'],['Translation consistency','Content','%',81,.01,1,'CMS'],['hreflang errors','Content','n',1450,-.08,0,'SEOClarity'],['Regional index coverage','Content','%',76,.015,1,'Search Console'],['In-language organic sessions','Response','count',4.2e6,.04,1,'Adobe CJA'],['AI referral sessions','Response','count',62000,.09,1,'Adobe CJA'],['Local map and listing views','Response','count',3.1e6,.03,1,'Google, Amap, Naver Place'],['Direct bookings, AI and organic','Outcome','count',88000,.04,1,'Adobe CJA'],['Honors joins before first stay','Outcome','count',6100,.05,1,'Honors data']],
+ emea:[['Share of the answer vs hotel groups','Visibility','%',21,.035,1,'Bluefish'],['OTA citation share','Visibility','%',44,-.012,0,'Bluefish'],['AI share of voice, local language','Visibility','%',18,.04,1,'Bluefish, ArcAI'],['Local prompt coverage','Visibility','%',29,.045,1,'Bluefish'],['Citation position vs regional set','Visibility','pos',3.8,-.02,0,'Bluefish'],['Sentiment in local AI answers','Visibility','score',70,.008,1,'Bluefish'],['AI Overviews presence','Visibility','%',34,.03,1,'SEOClarity'],['In-language parity','Content','%',66,.03,1,'CMS'],['Translation consistency','Content','%',84,.01,1,'CMS'],['hreflang errors','Content','n',980,-.08,0,'SEOClarity'],['Regional index coverage','Content','%',81,.012,1,'Search Console'],['In-language organic sessions','Response','count',6.8e6,.03,1,'Adobe CJA'],['AI referral sessions','Response','count',118000,.08,1,'Adobe CJA'],['Local profile views','Response','count',4.4e6,.03,1,'Local listings'],['Direct bookings, AI and organic','Outcome','count',132000,.035,1,'Adobe CJA'],['Honors joins before first stay','Outcome','count',8900,.045,1,'Honors data']]
+};
+function fmtUnit(v,u){
+ if(u==='%')return (v<10?v.toFixed(1):v.toFixed(0))+'%';
+ if(u==='count')return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e4?(v/1e3).toFixed(0)+'k':fmt(v);
+ if(u==='usd')return '$'+(v/1e6).toFixed(1)+'M';
+ if(u==='days'||u==='hours')return v.toFixed(1)+(u==='days'?' days':' hrs');
+ if(u==='score')return v.toFixed(0)+'/100';
+ if(u==='pos')return v.toFixed(1);
+ if(u==='pages')return v.toFixed(1)+' pages';
+ if(u==='pts')return (v>0?'+':'')+v.toFixed(1)+' pts';
+ return fmt(v)}
+function metricRows(v){const s=scale();return METRICS[v].map(([name,layer,u,base,drift,hb,src])=>{
+ let a=upto(series('m'+name,8,base,drift,.05));
+ if(u==='%')a=a.map(x=>Math.min(x,99));
+ if(u==='count'||u==='usd')a=a.map(x=>x*s);
+ const q=S.q,val=a[q],prev=a[q-1],tgt=base*Math.pow(1+drift,8)*(u==='count'||u==='usd'?s:1);
+ const gap=hb?(val-tgt)/tgt:(tgt-val)/tgt;const st=gap>-.05?'ok':gap>-.15?'risk':'behind';
+ const d=u==='%'?val-prev:(val/prev-1)*100;
+ return {name,layer,u,src,a,val,prev,tgt:u==='%'?Math.min(tgt,99):tgt,st,d,hb,dUnit:u==='%'?' pts':'%'}})}
+function scorecardBody(v){const f=(S.layer[v]||'All');const rows=metricRows(v).filter(r=>f==='All'||r.layer.split(' · ')[0]===f);
+ return rows.map(r=>{const good=r.hb?r.d>0:r.d<0;return `<tr class="rowlink" data-dd="${r.name}"><td><b style="font-weight:500">${r.name}</b><br><span class="layer">${r.layer}</span></td>
+ <td class="num"><b style="font-family:var(--serif);font-size:17px;color:var(--navy);font-weight:600">${fmtUnit(r.val,r.u)}</b></td>
+ <td class="num"><span class="delta ${good?'up':'down'}">${r.d>0?'+':''}${r.d.toFixed(1)}${r.dUnit}</span></td>
+ <td>${spark(r.a)}</td><td class="num">${fmtUnit(r.tgt,r.u)}</td>
+ <td><span class="status ${r.st}">${{ok:'On track',risk:'At risk',behind:'Behind'}[r.st]}</span></td><td class="src">${r.src}</td><td><button class="dd-btn" data-dd="${r.name}">Deep dive</button></td></tr>`}).join('')}
+function scorecard(v){const layers=['All',...new Set(METRICS[v].map(m=>m[1].split(' · ')[0]))];const f=S.layer[v]||'All';
+ const rows=metricRows(v);const n={ok:0,risk:0,behind:0};rows.forEach(r=>n[r.st]++);
+ return `<section class="panel" style="margin-bottom:16px"><div class="panel-head"><div><h2>Team scorecard</h2>
+ <p class="sub">${rows.length} measures for ${S.market}, ${S.brand}, ${QUARTERS[S.q]}. <span class="count">${n.ok} on track · ${n.risk} at risk · ${n.behind} behind</span></p></div>
+ ${S.dl?'<button class="btn" id="csv">Download CSV</button>':''}</div>
+ <div class="chips" id="chips">${layers.map(l=>`<button aria-pressed="${l===f}" data-l="${l}">${l}</button>`).join('')}</div>
+ <div class="scroll"><table><thead><tr><th>Measure</th><th class="num">This quarter</th><th class="num">vs last quarter</th><th>8-quarter trend</th><th class="num">Target</th><th>Status</th><th>Source</th><th></th></tr></thead>
+ <tbody id="scBody">${scorecardBody(v)}</tbody></table></div></section>`}
+
+const BREAKDOWN={
+ gsd:{title:'Visibility by AI tool',sub:'How Hilton shows up in each AI tool this quarter.',rows:['ChatGPT','Gemini','Perplexity','Copilot','AI Overviews','Claude','Meta AI'],
+  cols:[['Share of voice','%',8,38,1],['Citation rate','%',6,32,1],['Avg citation position','pos',1.8,6.5,0],['Sentiment','score',58,84,1],['Factual accuracy','%',72,96,1],['Recommendation inclusion','%',10,42,1],['Agent visits','count',80000,1.6e6,1]]},
+ sia:{title:'Sessions by source',sub:'Where AI and organic traffic comes from, and how much of it is identified.',rows:['ChatGPT','Perplexity','Gemini','Copilot','AI Overviews','Organic search','Unresolved direct'],
+  cols:[['Sessions','count',40000,9e6,1],['Identified','%',20,98,1],['Engaged rate','%',40,72,1],['Shopping conversion','%',1.8,6.2,1],['Bookings','count',800,120000,1],['Resolved to Honors ID','%',12,48,1]]},
+ oddm:{title:'Property page readiness by brand',sub:'Coverage across the portfolio, by brand.',rows:['Waldorf Astoria','LXR','Conrad','Signia','Hilton Hotels','Curio','Canopy','DoubleTree','Embassy Suites','Hampton','Home2'],
+  cols:[['Property pages','n',40,2900,1],['Structured data','%',35,95,1],['Answer-formatted','%',8,60,1],['Core Web Vitals pass','%',40,88,1],['Indexed','%',70,98,1],['Days to index','days',2,14,0]]},
+ apac:{title:'Market heatmap',sub:'APAC markets side by side. Darker cells perform better.',rows:['Japan','China','Korea','Singapore','Australia','India','Thailand','Indonesia'],
+  cols:[['Marketplace citation share','%',6,30,1],['Local prompt coverage','%',10,42,1],['In-language parity','%',30,96,1],['hreflang errors','n',40,900,0],['Index coverage','%',62,95,1],['AI referral sessions','count',2000,90000,1]]},
+ emea:{title:'Market heatmap',sub:'EMEA markets side by side. Darker cells perform better.',rows:['United Kingdom','Germany','France','Spain','Italy','Netherlands','Türkiye','UAE','Saudi Arabia','Egypt'],
+  cols:[['Share vs hotel groups','%',10,32,1],['Local prompt coverage','%',12,45,1],['In-language parity','%',40,98,1],['hreflang errors','n',30,700,0],['Index coverage','%',68,97,1],['AI referral sessions','count',3000,140000,1]]}
+};
+function breakdown(v){const B=BREAKDOWN[v];
+ const data=B.rows.map(r=>B.cols.map(([c,u,lo,hi])=>lo+rng(hash(r+c+S.q+S.market+S.brand))()*(hi-lo)));
+ const ranges=B.cols.map((_,j)=>{const col=data.map(d=>d[j]);return[Math.min(...col),Math.max(...col)]});
+ return `<section class="panel" style="margin-bottom:16px"><h2>${B.title}</h2><p class="sub">${B.sub}</p><div class="scroll"><table><thead><tr><th></th>${B.cols.map(c=>`<th class="num">${c[0]}</th>`).join('')}</tr></thead><tbody>`+
+ B.rows.map((r,i)=>`<tr><td>${r}</td>${B.cols.map(([c,u,lo,hi,hb],j)=>{const [mn,mx]=ranges[j];let t=(data[i][j]-mn)/((mx-mn)||1);if(!hb)t=1-t;
+  return `<td class="heat" style="background:rgba(169,219,255,${(.08+t*.72).toFixed(2)})">${fmtUnit(data[i][j],u)}</td>`}).join('')}</tr>`).join('')+
+ `</tbody></table></div></section>`}
+async function downloadCSV(v){const f=S.layer[v]||'All';const rows=metricRows(v).filter(r=>f==='All'||r.layer.split(' · ')[0]===f);
+ const esc=x=>'"'+String(x).replace(/"/g,'""')+'"';
+ const csv=[['Measure','Layer','This quarter','Last quarter','Target','Status','Source'].map(esc).join(',')].concat(rows.map(r=>[r.name,r.layer,r.val.toFixed(2),r.prev.toFixed(2),r.tgt.toFixed(2),r.st,r.src].map(esc).join(','))).join('\n');
+ if(!S.dl)return;try{await S.dl.save({filename:`${v}-scorecard-${QUARTERS[S.q].replace(' ','-')}.csv`,data:csv})}catch(e){if(e&&(e.code==='unavailable'||e.code==='not_granted')){S.dl=null;render()}}}
+
+
+/* ---------- deep dives ---------- */
+const AI_TOOLS=['ChatGPT','Gemini','Perplexity','Copilot','AI Overviews','Claude','Meta AI'];
+const DIMS={
+ 'AI tool':AI_TOOLS,
+ 'Prompt territory':['Family beach','City breaks','Business travel','Ski and mountain','Wellness','Weddings and events','Meetings and groups'],
+ 'Market':['United States','United Kingdom','Germany','UAE','Japan','China','Australia','Mexico'],
+ 'Regional market':['Japan','China','Korea','Singapore','Australia','India','UAE','United Kingdom','Germany'],
+ 'Brand':['Waldorf Astoria','Conrad','Hilton Hotels','Curio','DoubleTree','Embassy Suites','Hampton','Home2'],
+ 'Traffic source':['ChatGPT','Perplexity','Gemini','Copilot','AI Overviews','Organic search','Unresolved direct'],
+ 'Device':['Web desktop','Web mobile','App iOS','App Android'],
+ 'Content type':['Destination guides','Property pages','Offers','Events','Brand stories','FAQs'],
+ 'Page template':['Property home','Rooms','Dining','Meetings','Offers','Destination'],
+ 'Team':['Content','Product','Engineering','Regional','Social','Brand'],
+ 'APAC AI tool':['ChatGPT','Gemini','Perplexity','Doubao','DeepSeek','Yuanbao','Qwen and Quark','Baidu ERNIE','Kimi','Naver'],
+ 'EMEA AI tool':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews','Claude','Mistral Le Chat'],
+ 'APAC market':['Japan','China','Korea','Singapore','Australia','India','Thailand'],
+ 'EMEA market':['United Kingdom','Germany','France','Spain','Italy','UAE','Saudi Arabia'],
+ 'APAC language':['Japanese','Simplified Chinese','Traditional Chinese','Korean','Thai','Vietnamese'],
+ 'EMEA language':['German','French','Spanish','Italian','Arabic','Turkish'],
+ 'Language':['German','French','Spanish','Japanese','Chinese','Arabic','Korean'],
+ 'Attribute':['Location','Service','Cleanliness','Value for money','Loyalty benefits','Amenities','Family-friendliness','Business facilities','Booking experience']
+};
+function dimsFor(r){const n=r.name.toLowerCase(),L=r.layer;
+ if(S.view==='apac'||S.view==='emea'){const R_=S.view.toUpperCase();return L==='Content'?[R_+' language','Content type']:L==='Visibility'?[R_+' AI tool',R_+' market']:[R_+' market','Device']}
+ if(/sentiment|factual|accuracy|mention share/.test(n))return ['AI tool','Attribute'];
+ if(L.includes('AI')||/ai |citation|recommendation|sentiment|factual/.test(n))return ['AI tool','Prompt territory'];
+ if(L.includes('Search'))return ['Prompt territory','Market'];
+ if(L.includes('App and local'))return ['Market','Brand'];
+ if(L==='Response')return ['Traffic source','Device'];
+ if(L==='Outcome')return ['Market','Brand'];
+ if(L==='Intervention')return ['Content type','Team'];
+ if(L==='Technical')return ['Brand','Page template'];
+ if(L==='Data')return /ai|session|source/.test(n)?['Traffic source','Market']:['Device','Market'];
+ return ['Team','Market']}
+const FEEDS={Visibility:'Feeds share of the answer in the leadership view.',Response:'Feeds incremental room nights through the customer response layer.',Outcome:'Reported directly in the leadership view.',Intervention:'Moves visibility, which the model values in bookings.',Technical:'Moves visibility, which the model values in bookings.',Data:'Sets the confidence stated against leadership figures.',Operations:'Speeds up how quickly gains reach the leadership view.',Content:'Precondition for in-market visibility.'};
+function breakVals(r,dim){const vals=DIMS[dim];const many=r.u==='count'||r.u==='usd'||r.u==='n';
+ const w=vals.map(x=>.4+rng(hash(r.name+dim+x+S.market))()*1.2);const ws=w.reduce((a,b)=>a+b);
+ return vals.map((x,i)=>{const g=rng(hash(r.name+dim+x+S.q+S.market+S.brand));
+  let cur=many?r.val*w[i]/ws:r.val*(.65+g()*.7);let prev=cur*(1-(r.hb?1:-1)*(g()*.26-.11));
+  if(r.u==='%'){cur=Math.min(cur,99);prev=Math.min(prev,99)}return {k:x,cur,prev}})}
+const ddCharts=[];
+function openDeepDive(name){const r=metricRows(S.view).find(m=>m.name===name);if(!r)return;
+ const [d1,d2]=dimsFor(r);const b1=breakVals(r,d1),b2=breakVals(r,d2);
+ const good=r.hb?r.d>0:r.d<0;const top=f=>[...b1].sort(f).slice(0,3);
+ const chg=x=>r.u==='%'?x.cur-x.prev:(x.cur/x.prev-1)*100;
+ const gs=x=>(r.hb?1:-1)*chg(x);const up=b1.filter(x=>gs(x)>0).sort((a,b)=>gs(b)-gs(a)).slice(0,3),down=b1.filter(x=>gs(x)<0).sort((a,b)=>gs(a)-gs(b)).slice(0,3);
+ const empty=t=>`<li><span style="color:var(--muted)">${t}</span></li>`;
+ const li=x=>{const c=chg(x);const g=r.hb?c>0:c<0;return `<li><span>${x.k}</span><span class="delta ${g?'up':'down'}">${c>0?'+':''}${c.toFixed(1)}${r.dUnit}</span></li>`};
+ const dlg=$('#dd');dlg.innerHTML=`
+ <div class="dd-head"><div><span class="layer">${r.layer} · ${r.src}</span><h2>${r.name}</h2>
+  <div class="dd-kpis"><div>This quarter<b>${fmtUnit(r.val,r.u)}</b></div><div>vs last quarter<b class="delta ${good?'up':'down'}" style="color:${good?'#8FE0BC':'#F4B4A2'}">${r.d>0?'+':''}${r.d.toFixed(1)}${r.dUnit}</b></div><div>Target<b>${fmtUnit(r.tgt,r.u)}</b></div><div>Status<b style="font-size:18px">${{ok:'On track',risk:'At risk',behind:'Behind'}[r.st]}</b></div></div></div>
+  <button class="dd-close" id="ddClose">Close</button></div>
+ <div class="dd-body">
+  <section class="panel wide"><h2>Monthly trend against target</h2><p class="sub">${S.market}, ${S.brand}. Last 18 months.</p><div class="chart"><canvas id="ddTrend"></canvas></div><div class="feeds">${FEEDS[r.layer.split(' · ')[0]]||''}</div></section>
+  <section class="panel"><h2>By ${d1.toLowerCase()}</h2><p class="sub">This quarter against last quarter.</p><div class="chart"><canvas id="ddB1"></canvas></div></section>
+  <section class="panel"><h2>By ${d2.toLowerCase()}</h2><p class="sub">This quarter against last quarter.</p><div class="chart"><canvas id="ddB2"></canvas></div></section>
+  <section class="panel"><h2>Biggest gains by ${d1.toLowerCase()}</h2><ul class="movers">${up.length?up.map(li).join(''):empty('No gains this quarter')}</ul></section>
+  <section class="panel"><h2>Biggest declines by ${d1.toLowerCase()}</h2><ul class="movers">${down.length?down.map(li).join(''):empty('No declines this quarter')}</ul></section>
+ </div>`;
+ dlg.showModal();$('#ddClose').onclick=()=>dlg.close();
+ const months=monthsEnding(S.q,18);const steps=r.a.slice(-6);
+ const m=months.map((_,i)=>{const q=Math.min(steps.length-1,Math.floor(i/3));const g=rng(hash(r.name+'m'+i+S.market+S.brand))();return steps[q]*(1+.09*Math.sin(i*.52+hash(r.name)%7)+(g-.5)*.16)});
+ const tick=v=>fmtUnit(v,r.u);
+ ddCharts.push(new Chart($('#ddTrend'),{type:'line',data:{labels:months,datasets:[{label:r.name,data:m,borderColor:'#022F5F',backgroundColor:'rgba(169,219,255,.35)',fill:true,tension:.35},{label:'Target',data:months.map(()=>r.tgt),borderColor:'#8A9097',borderDash:[6,6],pointRadius:0}]},options:baseOpts({scales:{x:{grid:{display:false},ticks:{maxTicksLimit:9,maxRotation:0,font:{family:'Inter',size:12}}},y:{ticks:{callback:tick}}}})}));
+ [[b1,'ddB1'],[b2,'ddB2']].forEach(([b,id])=>ddCharts.push(new Chart($('#'+id),{type:'bar',data:{labels:b.map(x=>x.k),datasets:[{label:'Last quarter',data:b.map(x=>x.prev),backgroundColor:'#C9CDD2',borderRadius:4},{label:'This quarter',data:b.map(x=>x.cur),backgroundColor:'#022F5F',borderRadius:4}]},options:baseOpts({indexAxis:'y',scales:{x:{ticks:{callback:tick}},y:{grid:{display:false}}},plugins:{legend:{labels:{font:{family:'Inter',size:12},boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+tick(c.raw)}}}})})));
+}
+
+
+/* ---------- sentiment tracking ---------- */
+const ATTRS=['Location','Service','Cleanliness','Value for money','Loyalty benefits','Amenities','Family-friendliness','Business facilities','Booking experience'];
+const EXCERPTS=[
+ ['pos','ChatGPT','Best family resorts in Orlando','Family-friendliness','Hilton\'s Orlando resorts are a strong pick for families, with large pools and kids\' clubs close to the parks.'],
+ ['pos','Perplexity','Business hotels near Tokyo Station','Location','The Hilton options are walkable to the station and offer reliable workspace and executive lounge access.'],
+ ['neu','Gemini','Is Hilton Honors worth joining?','Loyalty benefits','Points are easy to earn, though redemption value varies more than with some rival programs.'],
+ ['neg','Copilot','Affordable hotels in Dubai Marina','Value for money','Hilton properties here tend to be pricier than nearby apartment hotels with similar amenities.'],
+ ['acc','AI Overviews','Hampton breakfast times','Booking experience','States breakfast ends at 9:00. The property page lists 10:00. Flagged for correction.']
+];
+function sentimentPanel(){const tools=AI_TOOLS;
+ return `<div class="grid2"><section class="panel"><h2>What AI tools say about Hilton, by attribute</h2><p class="sub">Net sentiment of Hilton mentions against the competitor average, ${S.market}, ${QUARTERS[S.q]}.</p><div class="chart tall"><canvas id="cSentAttr"></canvas></div></section>
+ <section class="panel"><h2>Net sentiment by AI tool</h2><p class="sub">Hilton against the strongest competitor in each tool.</p><div class="chart tall"><canvas id="cSentTool"></canvas></div></section></div>
+ <section class="panel" style="margin-bottom:16px"><h2>Answer excerpts to review</h2><p class="sub">Synthetic examples of the mentions the team reviews each week: what drives sentiment up or down, and factual errors to correct at the source.</p>
+ <div class="excerpts">${EXCERPTS.map(([c,tool,prompt,attr,txt])=>`<div class="ex ${c}"><div class="m"><span class="tag ${c}">${{pos:'Positive',neu:'Neutral',neg:'Negative',acc:'Accuracy issue'}[c]}</span><span>${tool}</span><span>Prompt: ${prompt}</span><span>Attribute: ${attr}</span></div><q>${txt}</q></div>`).join('')}</div></section>`}
+function sentimentCharts(){
+ const h=ATTRS.map(a=>-10+rng(hash(a+'h'+S.q+S.market))()*60),c=ATTRS.map(a=>-5+rng(hash(a+'c'+S.q+S.market))()*45);
+ mk('cSentAttr',{type:'bar',data:{labels:ATTRS,datasets:[{label:'Hilton',data:h,backgroundColor:h.map(v=>v<0?'#C9775F':'#022F5F'),borderRadius:4},{label:'Competitor average',data:c,backgroundColor:'#C9CDD2',borderRadius:4}]},options:baseOpts({indexAxis:'y',scales:{x:{ticks:{callback:v=>(v>0?'+':'')+v}},y:{grid:{display:false}}}})});
+ const th=AI_TOOLS.map(a=>10+rng(hash(a+'sh'+S.q+S.market))()*40),tc=AI_TOOLS.map(a=>5+rng(hash(a+'sc'+S.q+S.market))()*40);
+ mk('cSentTool',{type:'bar',data:{labels:AI_TOOLS,datasets:[{label:'Hilton',data:th,backgroundColor:'#022F5F',borderRadius:6},{label:'Strongest competitor',data:tc,backgroundColor:'#C9CDD2',borderRadius:6}]},options:baseOpts({scales:{y:{ticks:{callback:v=>'+'+v}}}})});
+}
+
+
+/* ---------- AI tools by market (regional) ---------- */
+const TOOLMAP={
+ apac:{tools:['ChatGPT','Gemini','Copilot','Perplexity','Doubao','DeepSeek','Yuanbao','Qwen and Quark','Baidu ERNIE','Kimi','Naver'],
+  markets:{'Japan':['ChatGPT','Gemini','Copilot','Perplexity'],'China':['Doubao','DeepSeek','Yuanbao','Qwen and Quark','Baidu ERNIE','Kimi'],'Korea':['ChatGPT','Gemini','Perplexity','Naver'],
+   'Singapore':['ChatGPT','Gemini','Copilot','Perplexity'],'Australia':['ChatGPT','Gemini','Copilot','Perplexity'],'India':['ChatGPT','Gemini','Copilot','Perplexity'],'Thailand':['ChatGPT','Gemini','Copilot']},
+  note:'Mainland China is tracked on local AI tools only, and Korea adds Naver. A US prompt set run through ChatGPT would miss most of the region.'},
+ emea:{tools:['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews','Claude','Mistral Le Chat'],
+  markets:{'United Kingdom':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews','Claude'],'Germany':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews','Claude','Mistral Le Chat'],'France':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews','Mistral Le Chat'],
+   'Spain':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews'],'Italy':['ChatGPT','Gemini','Copilot','Perplexity','AI Overviews'],'UAE':['ChatGPT','Gemini','Copilot','Perplexity'],'Saudi Arabia':['ChatGPT','Gemini','Copilot']},
+  note:'Tracked tools vary by market, so each market is read on the assistants its travelers actually use.'}
+};
+function toolMatrix(v){const M=TOOLMAP[v];if(!M)return'';
+ const cells=Object.entries(M.markets).map(([m,ts])=>M.tools.map(tl=>ts.includes(tl)?6+rng(hash(m+tl+S.q+S.brand))()*30:null));
+ const all=cells.flat().filter(x=>x!==null),mn=Math.min(...all),mx=Math.max(...all);
+ return `<section class="panel" style="margin-bottom:16px"><h2>Hilton share of voice, by AI tool and market</h2><p class="sub">${M.note} Darker cells perform better; grey cells are tools not tracked in that market.</p>
+ <div class="scroll"><table><thead><tr><th></th>${M.tools.map(x=>`<th class="num">${x}</th>`).join('')}</tr></thead><tbody>`+
+ Object.keys(M.markets).map((m,i)=>`<tr><td>${m}</td>${cells[i].map(c=>c===null?`<td class="heat" style="background:#F5F5F3;color:#8A9097">–</td>`:`<td class="heat" style="background:rgba(169,219,255,${(.08+(c-mn)/((mx-mn)||1)*.72).toFixed(2)})">${c.toFixed(0)}%</td>`).join('')}</tr>`).join('')+
+ `</tbody></table></div></section>`}
+
+
+/* ---------- semantic page map ---------- */
+const PLAT=['ChatGPT','Gemini','Perplexity','Copilot','AI Overviews'];
+const DEST=['Orlando','Cancún','Maui','London','New York','Tokyo','Dubai','Paris','Chicago','Las Vegas','Barcelona','Sydney','Singapore','Rome','Miami','Bali','Lisbon','Denver'];
+const CL=[
+ ['Family beach resorts',['Best family beach resorts in {d}','Kid-friendly beachfront hotels in {d}','Where to stay in {d} with kids']],
+ ['City break hotels',['Where to stay in {d} for a weekend','Best hotels in central {d}','{d} city break: hotel guide']],
+ ['Price and value comparisons',['Is a {d} hotel worth the price?','Cheapest good hotels in {d}','{d} hotels: value for money ranked']],
+ ['Points and loyalty comparisons',['Hotel loyalty programs compared','Best hotel points redemptions in {d}','Is hotel elite status worth it?']],
+ ['Business travel and airport hotels',['Best business hotels in {d}','Airport hotels in {d} with lounges','Where to stay in {d} for a conference']],
+ ['Luxury hotel comparisons',['Best luxury hotels in {d}','Five-star hotels in {d} compared','Most iconic hotels in {d}']],
+ ['Wellness and spa retreats',['Best spa hotels near {d}','Wellness retreats in {d}','Hotels with the best spas in {d}']],
+ ['Meetings and group venues',['Event venues in {d} for 200 people','Hotels in {d} with meeting space','Group hotel booking in {d}']],
+ ['Weddings and celebrations',['Wedding hotels in {d}','Destination weddings in {d}','Hotel ballrooms in {d}']],
+ ['Pet-friendly stays',['Pet-friendly hotels in {d}','Hotels in {d} that allow dogs','Travelling with pets to {d}']],
+ ['Ski and mountain resorts',['Ski-in ski-out hotels near {d}','Mountain lodges near {d}','Best ski resorts with hotels']],
+ ['Extended stays and apartments',['Extended stay hotels in {d}','Apartment hotels in {d}','Monthly hotel stays in {d}']],
+ ['Hotel amenities questions',['Hotels in {d} with free breakfast','Hotels in {d} with rooftop pools','Hotels with EV charging in {d}']],
+ ['Theme park hotels',['Hotels near the parks in {d}','Best theme park hotels in {d}','Shuttle hotels for {d} parks']],
+ ['All-inclusive or hotel',['All-inclusive or hotel in {d}?','Best all-inclusive resorts in {d}','Is all-inclusive worth it in {d}?']],
+ ['Accessible travel',['Accessible hotels in {d}','Wheelchair-friendly rooms in {d}','Accessible travel guide to {d}']],
+ ['Road trips and drive-to stays',['Road trip hotels near {d}','Weekend drive from {d}','Best stops on a {d} road trip']],
+ ['Travel credit card perks',['Best hotel credit cards','Free night certificates explained','Hotel card perks for {d} trips']]];
+const SRC={'Hilton owned':['hilton.com','stories.hilton.com'],'Publisher':['cntraveler.com','travelandleisure.com','lonelyplanet.com','timeout.com','thepointsguy.com','nerdwallet.com','afar.com','telegraph.co.uk'],'Online travel agency':['booking.com','expedia.com','hotels.com','tripadvisor.com','agoda.com'],'Community':['reddit.com','flyertalk.com','youtube.com','quora.com'],'Competitor':['marriott.com','ihg.com','hyatt.com','accor.com'],'Other':['visitflorida.com','visitbritain.com','wikipedia.org']};
+const SRCW=[['Hilton owned',.08],['Publisher',.44],['Online travel agency',.18],['Community',.12],['Competitor',.1],['Other',.08]];
+const SRCC={'Hilton owned':'#022F5F','Publisher':'#5A9BD5','Online travel agency':'#8A9097','Community':'#D4A72C','Competitor':'#C9775F','Other':'#C9CDD2'};
+const CLC=['#022F5F','#5A9BD5','#C9775F','#2E8B7A','#8A6BBE','#D4A72C','#3D6390','#7FBDE8','#7A9E3F','#B5577E','#4F8FA8','#9C7A54','#1F7A5A','#E08A5B','#6C7A89','#5B4B8A','#C2A83E','#8FB0D3'];
+const MAPCACHE={};
+S.map={sel:null,color:'brand',platform:'All platforms',labels:true,sort:'pages',dir:-1,picked:null,zoom:null};
+function genMap(){const key=S.market+'|'+S.q;if(MAPCACHE[key])return MAPCACHE[key];
+ const r=rng(hash('map'+key));const g=()=>{let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+ const f=S.market==='Global'?1:.3+r()*.25;
+ const clusters=CL.map((c,i)=>({id:i,name:c[0],titles:c[1],cx:6+r()*88,cy:6+r()*48,sp:2.6+r()*3,n:Math.round((i<5?360+r()*110:110+r()*230)*f),rate:.55+r()*.33}));
+ const pages=[];
+ clusters.forEach(c=>{for(let k=0;k<c.n;k++){let x=r(),type='Other';for(const [tp,w] of SRCW){if(x<w){type=tp;break}x-=w}
+  const dom=SRC[type][Math.floor(r()*SRC[type].length)];
+  const mentioned=type==='Hilton owned'?true:type==='Competitor'?r()<.15:r()<c.rate;
+  let plats=PLAT.filter(()=>r()<.5);if(!plats.length)plats=[PLAT[Math.floor(r()*PLAT.length)]];
+  const cit=Math.max(1,Math.round(Math.exp(r()*r()*6.05)));
+  const title=c.titles[Math.floor(r()*c.titles.length)].replace('{d}',DEST[Math.floor(r()*DEST.length)]);
+  pages.push({c:c.id,x:c.cx+g()*c.sp*1.3,y:c.cy+g()*c.sp*.8,cit,mentioned,type,dom,plats,title})}});
+ return MAPCACHE[key]={clusters,pages}}
+function mapState(){const M=genMap();if(!S.map.sel)S.map.sel=new Set([0,1,2,3,4]);
+ const vis=M.pages.filter(p=>S.map.sel.has(p.c)&&(S.map.platform==='All platforms'||p.plats.includes(S.map.platform)));return {M,vis}}
+const ctag=(c)=>`<span class="ctag" style="background:${CLC[c.id]}22;color:${CLC[c.id]==='#C9CDD2'?'#3A3D42':CLC[c.id]}">${c.name}</span>`;
+function clusterRows(M,vis){const rows=M.clusters.filter(c=>S.map.sel.has(c.id)).map(c=>{const ps=vis.filter(p=>p.c===c.id);const y=ps.filter(p=>p.mentioned).length;
+  return {c,pages:ps.length,yes:y,no:ps.length-y,pct:ps.length?y/ps.length*100:0,cit:ps.reduce((a,p)=>a+p.cit,0)}});
+ const k=S.map.sort;rows.sort((a,b)=>S.map.dir*((a[k]??0)-(b[k]??0)));return rows}
+function mapView(){const {M,vis}=mapState();
+ const yes=vis.filter(p=>p.mentioned).length,rate=vis.length?yes/vis.length*100:0;
+ const rows=clusterRows(M,vis);const top=[...rows].sort((a,b)=>b.no-a.no)[0];
+ const opp=vis.filter(p=>!p.mentioned).sort((a,b)=>b.cit-a.cit).slice(0,8);
+ const th=(k,l,num)=>`<th class="sort${num?' num':''}" data-sort="${k}">${l}${S.map.sort===k?(S.map.dir<0?' ↓':' ↑'):''}</th>`;
+ const legend=S.map.color==='brand'?`<span><i style="background:#022F5F"></i>Hilton mentioned</span><span><i style="background:#C9775F"></i>Hilton not mentioned</span>`:
+  S.map.color==='source'?Object.entries(SRCC).map(([k,c])=>`<span><i style="background:${c}"></i>${k}</span>`).join(''):M.clusters.filter(c=>S.map.sel.has(c.id)).map(c=>`<span><i style="background:${CLC[c.id]}"></i>${c.name}</span>`).join('');
+ return `<div class="mkpis">
+ <div class="mkpi"><div class="kind">Pages analysed</div><div class="big">${fmt(M.pages.length)}</div><div class="small">${M.clusters.length} topic clusters detected · ${fmt(vis.length)} shown</div></div>
+ <div class="mkpi"><div class="kind">Hilton mention rate</div><div class="big">${rate.toFixed(1)}%</div><div class="small">${fmt(yes)} of ${fmt(vis.length)} shown pages mention Hilton</div></div>
+ <div class="mkpi"><div class="kind">Top opportunity cluster</div><div class="big" style="font-size:24px">${top?top.c.name:'–'}</div><div class="warn">${top?fmt(top.no)+' pages without a Hilton mention':''}</div></div></div>
+ <details class="howto" open><summary>How to read this view</summary><div class="howgrid">
+ <div class="how"><span class="num">1</span><h4>Each dot is a cited page</h4><p>A page an AI tool used in an answer. Bigger dots are cited more often.</p></div>
+ <div class="how"><span class="num">2</span><h4>Close dots share a topic</h4><p>Pages about similar things sit together, grouped by meaning.</p></div>
+ <div class="how"><span class="num">3</span><h4>Groups are topic clusters</h4><p>Each cluster is a travel theme AI tools cite together, such as family beach resorts.</p></div>
+ <div class="how"><span class="num">4</span><h4>Coral dots are the gaps</h4><div class="dots"><span><i style="background:#022F5F"></i>Hilton mentioned</span><span><i style="background:#C9775F"></i>Hilton missing</span></div><p>Clusters full of coral dots are where Hilton is absent from the answer.</p></div>
+ </div></details>
+ <section class="panel" id="mapPanel" style="margin-bottom:16px"><div class="panel-head"><div><h2>Semantic page map</h2><p class="sub">Dot size is citation count. Scroll to zoom, drag to pan, click a dot to explore.</p></div>
+ <div class="mapbar"><label>Colour<select id="mColor"><option value="brand">Hilton visibility</option><option value="cluster">Cluster</option><option value="source">Source type</option></select></label>
+ <label>Platform<select id="mPlat">${['All platforms',...PLAT].map(p=>`<option>${p}</option>`).join('')}</select></label>
+ <label><input type="checkbox" id="mLabels" ${S.map.labels?'checked':''}> Labels</label><button class="btn" id="mFull">Fullscreen</button></div></div>
+ <div class="mapwrap">
+ <div class="clist"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600"><span>Show clusters</span><span style="color:var(--muted)">${S.map.sel.size} / ${M.clusters.length}</span></div>
+  <input type="search" id="mSearch" placeholder="Search clusters" aria-label="Search clusters">
+  <div class="clinks"><button id="mAll">Select all</button><button id="mNone">Clear</button></div>
+  <div class="citems" id="mItems">${M.clusters.map(c=>`<label data-n="${c.name.toLowerCase()}"><input type="checkbox" data-c="${c.id}" ${S.map.sel.has(c.id)?'checked':''}><i class="sw" style="background:${CLC[c.id]}"></i>${c.name}<span class="n">${c.n}</span></label>`).join('')}</div></div>
+ <div><div class="mapc"><div class="maptools"><button id="mIn" aria-label="Zoom in">+</button><button id="mOut" aria-label="Zoom out">−</button><button id="mReset">Reset</button></div><canvas id="cMap"></canvas></div><div class="mlegend">${legend}</div></div>
+ <div class="mdetail" id="mDetail"><p class="empty">Click a dot to explore a page.</p></div>
+ </div></section>
+ <div class="grid2"><section class="panel"><h2>Cluster summary</h2><p class="sub">For the clusters and platform selected. Click a column to sort.</p><div class="scroll"><table style="min-width:620px"><thead><tr><th>Cluster</th>${th('pages','Pages',1)}${th('yes','Hilton ✓',1)}${th('no','Hilton ✗',1)}${th('pct','Mention %',1)}${th('cit','Citations',1)}</tr></thead><tbody>
+ ${rows.map(r=>`<tr><td>${ctag(r.c)}</td><td class="num">${fmt(r.pages)}</td><td class="num">${fmt(r.yes)}</td><td class="num">${fmt(r.no)}</td><td class="num">${r.pct.toFixed(1)}%</td><td class="num">${fmt(r.cit)}</td></tr>`).join('')}</tbody></table></div></section>
+ <section class="panel"><h2>Top opportunity pages</h2><p class="sub">Highly cited pages that do not mention Hilton.</p><div class="scroll"><table style="min-width:560px"><thead><tr><th>Cluster</th><th>Page</th><th class="num">Citations</th></tr></thead><tbody>
+ ${opp.map(p=>`<tr><td>${ctag(M.clusters[p.c])}</td><td><span style="color:var(--navy);font-weight:500">${p.title}</span><br><span class="layer">${p.dom}</span></td><td class="num">${p.cit}</td></tr>`).join('')}</tbody></table></div></section></div>`}
+let mapChart=null,mapVis=[];
+function mapDatasets(M,vis){const A=a=>a+'C0';const pt=p=>({x:p.x,y:p.y,r:2.5+Math.sqrt(p.cit)*.62,p});
+ if(S.map.color==='brand')return [{label:'Not mentioned',data:vis.filter(p=>!p.mentioned).map(pt),backgroundColor:A('#C9775F')},{label:'Mentioned',data:vis.filter(p=>p.mentioned).map(pt),backgroundColor:A('#022F5F')}];
+ if(S.map.color==='source')return Object.keys(SRCC).map(k=>({label:k,data:vis.filter(p=>p.type===k).map(pt),backgroundColor:A(SRCC[k])}));
+ return M.clusters.filter(c=>S.map.sel.has(c.id)).map(c=>({label:c.name,data:vis.filter(p=>p.c===c.id).map(pt),backgroundColor:A(CLC[c.id])}))}
+function mapInit(){const {M,vis}=mapState();mapVis=vis;
+ $('#mColor').value=S.map.color;$('#mPlat').value=S.map.platform;
+ const xs=vis.map(p=>p.x),ys=vis.map(p=>p.y);const pad=4;
+ const base={x:[Math.min(...xs,0)-pad,Math.max(...xs,100)+pad],y:[Math.min(...ys,0)-pad,Math.max(...ys,60)+pad]};
+ const z=S.map.zoom||base;
+ const labelPlugin={id:'clabels',afterDatasetsDraw(ch){if(!S.map.labels)return;const ctx=ch.ctx;ctx.save();ctx.font='600 12px Inter, Arial, sans-serif';
+  M.clusters.filter(c=>S.map.sel.has(c.id)).forEach(c=>{const ps=vis.filter(p=>p.c===c.id);if(!ps.length)return;
+   const x=ch.scales.x.getPixelForValue(ps.reduce((a,p)=>a+p.x,0)/ps.length),y=ch.scales.y.getPixelForValue(ps.reduce((a,p)=>a+p.y,0)/ps.length);
+   const w=ctx.measureText(c.name).width+14;ctx.fillStyle='rgba(255,255,255,.92)';ctx.strokeStyle='#DCDDDA';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x-w/2,y-11,w,22,6);else ctx.rect(x-w/2,y-11,w,22);ctx.fill();ctx.stroke();
+   ctx.fillStyle='#1B1B1B';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.name,x,y)});ctx.restore()}};
+ mapChart=new Chart($('#cMap'),{type:'bubble',data:{datasets:mapDatasets(M,vis)},plugins:[labelPlugin],
+  options:{responsive:true,maintainAspectRatio:false,animation:false,
+   scales:{x:{display:false,min:z.x[0],max:z.x[1]},y:{display:false,min:z.y[0],max:z.y[1]}},
+   elements:{point:{borderColor:'#FFFFFF',borderWidth:1}},
+   plugins:{legend:{display:false},tooltip:{backgroundColor:'#022F5F',callbacks:{title:i=>i[0].raw.p.title,label:i=>`${i.raw.p.dom} · ${i.raw.p.cit} citations · ${i.raw.p.mentioned?'Hilton mentioned':'No Hilton mention'}`}}},
+   onClick:(e,els)=>{if(dragMoved)return;if(els.length){const p=mapChart.data.datasets[els[0].datasetIndex].data[els[0].index].p;showPage(M,p)}}}});
+ charts.push(mapChart);
+ const cv=$('#cMap');let drag=null,dragMoved=false;
+ const setZ=(x0,x1,y0,y1)=>{S.map.zoom={x:[x0,x1],y:[y0,y1]};const s=mapChart.options.scales;s.x.min=x0;s.x.max=x1;s.y.min=y0;s.y.max=y1;mapChart.update('none')};
+ const zoomAt=(px,py,f)=>{const sx=mapChart.scales.x,sy=mapChart.scales.y;const cx=sx.getValueForPixel(px),cy=sy.getValueForPixel(py);
+  setZ(cx-(cx-sx.min)*f,cx+(sx.max-cx)*f,cy-(cy-sy.min)*f,cy+(sy.max-cy)*f)};
+ cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,e.deltaY<0?.85:1.18)},{passive:false});
+ cv.addEventListener('pointerdown',e=>{drag={x:e.offsetX,y:e.offsetY,sx:[mapChart.scales.x.min,mapChart.scales.x.max],sy:[mapChart.scales.y.min,mapChart.scales.y.max]};dragMoved=false});
+ cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.offsetX-drag.x,dy=e.offsetY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)dragMoved=true;if(!dragMoved)return;
+  const ca=mapChart.chartArea;const kx=(drag.sx[1]-drag.sx[0])/(ca.right-ca.left),ky=(drag.sy[1]-drag.sy[0])/(ca.bottom-ca.top);
+  setZ(drag.sx[0]-dx*kx,drag.sx[1]-dx*kx,drag.sy[0]+dy*ky,drag.sy[1]+dy*ky)});
+ window.onpointerup=()=>{drag=null;setTimeout(()=>dragMoved=false,0)};
+ const mid=()=>[ (mapChart.chartArea.left+mapChart.chartArea.right)/2,(mapChart.chartArea.top+mapChart.chartArea.bottom)/2];
+ $('#mIn').onclick=()=>zoomAt(...mid(),.75);$('#mOut').onclick=()=>zoomAt(...mid(),1.33);
+ $('#mReset').onclick=()=>{S.map.zoom=null;setZ(base.x[0],base.x[1],base.y[0],base.y[1]);S.map.zoom=null};
+ $('#mColor').onchange=e=>{S.map.color=e.target.value;render()};
+ $('#mPlat').onchange=e=>{S.map.platform=e.target.value;render()};
+ $('#mLabels').onchange=e=>{S.map.labels=e.target.checked;mapChart.update('none')};
+ $('#mFull').onclick=()=>{const p=$('#mapPanel');const on=p.classList.toggle('fs');$('#mFull').textContent=on?'Exit fullscreen':'Fullscreen';setTimeout(()=>mapChart.resize(),30)};
+ $('#mItems').addEventListener('change',e=>{const c=+e.target.dataset.c;if(e.target.checked)S.map.sel.add(c);else S.map.sel.delete(c);S.map.zoom=null;render()});
+ $('#mAll').onclick=()=>{M.clusters.forEach(c=>S.map.sel.add(c.id));S.map.zoom=null;render()};
+ $('#mNone').onclick=()=>{S.map.sel.clear();S.map.zoom=null;render()};
+ $('#mSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#mItems label').forEach(l=>l.style.display=l.dataset.n.includes(q)?'':'none')});
+ document.querySelectorAll('th.sort').forEach(h=>h.onclick=()=>{const k=h.dataset.sort;if(S.map.sort===k)S.map.dir*=-1;else{S.map.sort=k;S.map.dir=-1}render()});
+}
+function showPage(M,p){const c=M.clusters[p.c];
+ $('#mDetail').innerHTML=`<div>${ctag(c)}</div><h3>${p.title}</h3><div class="layer">${p.dom} · ${p.type}</div>
+ <div style="display:flex;gap:24px"><div><b style="font-family:var(--serif);font-size:24px;color:var(--navy)">${p.cit}</b><br><span class="layer">citations</span></div>
+ <div><b style="font-family:var(--serif);font-size:24px;color:${p.mentioned?'var(--up)':'var(--down)'}">${p.mentioned?'Yes':'No'}</b><br><span class="layer">Hilton mentioned</span></div></div>
+ <div><span class="layer">Cited by</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${p.plats.map(x=>`<span class="ctag" style="background:var(--sky-soft);color:var(--navy)">${x}</span>`).join('')}</div></div>
+ <div class="feeds">${p.mentioned?(p.type==='Hilton owned'?'Hilton-owned page that AI tools already cite. Keep it fresh and well structured.':'This page already mentions Hilton. Check the mention is accurate and positive.'):(p.type==='Competitor'?'Competitor page that AI tools cite for this topic. A comparable Hilton page is the response.':'High-value gap: a cited page without Hilton. Target for outreach, partnership content, or a stronger Hilton page on the topic.')}</div>`}
+
+/* ---------- views ---------- */
+function leadership(){
+ const k={irn:kpiData('irn'),soa:kpiData('soa'),dcc:kpiData('dcc')};
+ const r=R('lead'+S.q);const rn=parseInt(k.irn.value.replace(/,/g,''));
+ const exp=(r()*6+3).toFixed(1),attrib=Math.round(rn*.18),rev=(attrib*ADR/1e6).toFixed(1);
+ const mkt=S.market==='Global'?'globally':'in '+S.market;
+ const sel=S.sel.leadership||'irn';
+ return `
+ <section class="loop" aria-label="This quarter in four steps">
+  <div><h3><em>01</em>What changed</h3><p>Incremental room nights ran ${exp}% above expected ${mkt} in ${QUARTERS[S.q]}, outside normal seasonal range.</p></div>
+  <div><h3><em>02</em>Likely factors</h3><p>Share of the answer rose ${k.soa.delta.toFixed(1)} pts, led by need-led family and wellness prompts. Paid media and promotions were flat.</p></div>
+  <div><h3><em>03</em>Commercial implication</h3><p>≈ ${fmt(attrib)} room nights and $${rev}M revenue linked to the visibility gain. Medium confidence: mix model plus two holdout tests.</p></div>
+  <div><h3><em>04</em>Recommended action</h3><p>Extend structured data to the remaining property pages in priority markets. Owner: Orchestration, Design &amp; Digital Marketing. Decision: approve sprint capacity.</p></div>
+ </section>
+ <div class="tiles" id="tiles">${VIEWS.leadership.kpis.map(id=>tile(id,id===sel)).join('')}</div>
+ <div class="grid2">
+  <section class="panel"><h2>Share of the answer leads room nights</h2><p class="sub">Monthly, ${S.market}. Movement in AI answers shows up in commercial results about two months later.</p><div class="chart tall"><canvas id="cLead"></canvas></div></section>
+  <section class="panel"><h2>What drives incremental room nights</h2><p class="sub">Estimated contribution this quarter. Each team's measures sit behind one of these drivers.</p><div class="chart tall"><canvas id="cDrivers"></canvas></div></section>
+ </div>
+ ${detailPanel(sel)}
+ <section class="panel"><h2>Data readiness</h2><p class="sub">Shown separately from the confidence stated on each figure.</p>
+  <div class="legend-ready"><span><span class="badge now">Now</span>${READY_TIP.now}</span><span><span class="badge connect">Connect</span>${READY_TIP.connect}</span><span><span class="badge scale">Scale</span>${READY_TIP.scale}</span></div>
+ </section>`}
+
+function teamView(v){const sel=S.sel[v]||VIEWS[v].kpis[0];
+ return `<div class="tiles" id="tiles">${VIEWS[v].kpis.map(id=>tile(id,id===sel)).join('')}</div>${detailPanel(sel)}${v==='gsd'?sentimentPanel():''}${scorecard(v)}${toolMatrix(v)}${breakdown(v)}`}
+
+function detailPanel(id){const k=kpiData(id);const body=id==='mco'?mcoTable():`<div class="chart"><canvas id="cDetail"></canvas></div>`;
+ return `<section class="panel" style="margin-bottom:16px" aria-live="polite">
+  <h2>${DETAIL_TITLE[id]}</h2><p class="sub">${k.why}</p>${body}
+  <div class="feeds">${k.feeds}</div>
+  <div class="meta"><div><b>Building blocks</b>${k.blocks}</div><div><b>Reporting cuts</b>${k.report}</div><div><b>Readiness and confidence</b><span class="badge ${k.ready}">${READY[k.ready]}</span>&nbsp; ${confHtml(k.conf)}</div></div>
+ </section>`}
+
+function render(){
+ clearCharts();const v=VIEWS[S.view];
+ $('#viewTitle').textContent=v.title;$('#viewSub').textContent=v.sub;
+ document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===S.view?'page':'false'));
+ $('#view').innerHTML=S.view==='leadership'?leadership():S.view==='map'?mapView():teamView(S.view);
+ const sel=S.sel[S.view]||v.kpis[0];
+ if(S.view==='map')mapInit();
+ else if(sel!=='mco')detailChart(sel,'cDetail');
+ if(S.view==='gsd')sentimentCharts();
+ if(S.view==='leadership'){
+  const months=monthsEnding(S.q,18),soa=series('soam',18,18,.02,.03);const s=scale();
+  const rn=soa.map((v,i)=>(9000+ (soa[Math.max(0,i-2)])*900+R('n'+i)()*1500)*s);
+  mk('cLead',{type:'line',data:{labels:months,datasets:[{label:'Share of the answer (%)',data:soa,borderColor:'#022F5F',tension:.35,yAxisID:'y'},{label:'Incremental room nights',data:rn,borderColor:'#5A9BD5',backgroundColor:'rgba(169,219,255,.35)',fill:true,tension:.35,yAxisID:'y1'}]},
+   options:baseOpts({scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:9,font:{family:'Inter',size:12}}},y:{position:'left',ticks:{callback:v=>v+'%'}},y1:{position:'right',grid:{display:false},ticks:{callback:v=>fmt(v)}}}})});
+  const tot=parseInt(kpiData('irn').value.replace(/,/g,''));const r=R('drv'+S.q);
+  const w=[.30+r()*.08,.24+r()*.08,.18+r()*.06,.10+r()*.05];const sum=w.reduce((a,b)=>a+b);
+  const labels=['AI visibility (share of the answer)','Organic search visibility','Branded demand created','App and local visibility'];
+  mk('cDrivers',{type:'bar',data:{labels,datasets:[{label:'Room nights',data:w.map(x=>x/sum*tot),backgroundColor:['#022F5F','#2E5C8A','#5A9BD5','#A9DBFF'],borderRadius:6}]},
+   options:baseOpts({indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'#022F5F',callbacks:{label:c=>fmt(c.raw)+' room nights'}}},scales:{x:{ticks:{callback:v=>fmt(v)}},y:{grid:{display:false},ticks:{font:{family:'Inter',size:12},color:'#1B1B1B'}}}})});
+ }
+ if(S.view!=='leadership'&&S.view!=='map'){
+  document.querySelectorAll('#chips button').forEach(b=>b.addEventListener('click',()=>{S.layer[S.view]=b.dataset.l;
+   document.querySelectorAll('#chips button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#scBody').innerHTML=scorecardBody(S.view)}));
+  if($('#csv'))$('#csv').addEventListener('click',()=>downloadCSV(S.view));
+  $('#scBody').addEventListener('click',e=>{const el=e.target.closest('[data-dd]');if(el)openDeepDive(el.dataset.dd)});
+  $('#scBody').addEventListener('keydown',e=>{if(e.key==='Enter'){const el=e.target.closest('[data-dd]');if(el)openDeepDive(el.dataset.dd)}});
+ }
+ document.querySelectorAll('#tiles .tile').forEach(t=>t.addEventListener('click',()=>{S.sel[S.view]=t.dataset.k;render();
+  document.querySelector(`#tiles .tile[data-k="${t.dataset.k}"]`).focus()}));
+}
+
+/* ---------- init ---------- */
+(function init(){
+ const nav=$('#nav');let lastGroup='';
+ Object.entries(VIEWS).forEach(([k,v])=>{if(v.group!==lastGroup){nav.insertAdjacentHTML('beforeend',`<p class="nav-group">${v.group}</p>`);lastGroup=v.group}
+  nav.insertAdjacentHTML('beforeend',`<button data-v="${k}">${v.nav}</button>`)});
+ nav.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.view=b.dataset.v;render()});
+ const fill=(el,opts,val)=>{el.innerHTML=opts.map((o,i)=>`<option value="${typeof val==='number'?i:o}">${o}</option>`).join('');el.value=typeof val==='number'?String(val):val};
+ fill($('#fMarket'),Object.keys(MARKETS),S.market);fill($('#fBrand'),Object.keys(BRANDS),S.brand);
+ const qs=QUARTERS.slice(3);$('#fQuarter').innerHTML=qs.map((q,i)=>`<option value="${i+3}">${q}</option>`).join('');$('#fQuarter').value='7';
+ $('#fMarket').onchange=e=>{S.market=e.target.value;render()};
+ $('#fBrand').onchange=e=>{S.brand=e.target.value;render()};
+ $('#fQuarter').onchange=e=>{S.q=+e.target.value;render()};
+ $('#dd').addEventListener('close',()=>{while(ddCharts.length)ddCharts.pop().destroy()});
+ $('#dd').addEventListener('click',e=>{if(e.target.id==='dd')$('#dd').close()});
+ render();
+ if(window.claude&&window.claude.use){window.claude.use('downloads').then(d=>{if(d){S.dl=d;render()}}).catch(()=>{})}
+})();
+</script>
+</body>
+</html>
